@@ -9,8 +9,8 @@
     "plugin"
   ],
   "author": {
-    "name": "Your Name",
-    "email": "you@example.com",
+    "name": "Ward Cunningham",
+    "email": "ward@c2.com",
     "url": "http://example.com"
   },
   "contributors": [],
@@ -29,10 +29,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fedwiki/wiki-plugin-chess.git"
+    "url": "https://github.com/wardcunnigham/wiki-plugin-chess.git"
   },
   "bugs": {
-    "url": "https://github.com/fedwiki/wiki-plugin-chess/issues"
+    "url": "https://github.com/wardcunnigham/wiki-plugin-chess/issues"
   },
   "engines": {
     "node": ">=0.10"
