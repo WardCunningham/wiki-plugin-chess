@@ -1,37 +1,177 @@
 {
   "title": "About Chess Plugin",
   "story": [
-  {
-    "type": "paragraph",
-    "id": "907c018ccbc2779d",
-    "text": "Here we describe the purpose of the plugin and include a sample."
-  },
-  {
-    "type": "chess",
-    "id": "b2f48b263e6aeb2f",
-    "text": "This is text in the new plugin. You can *double-click* to edit it too."
-  }
-],
-  "journal": [
-  {
-    "type": "create",
-    "item": {
-      "title": "About Chess Plugin",
-      "story": [
-  {
-    "type": "paragraph",
-    "id": "907c018ccbc2779d",
-    "text": "Here we describe the purpose of the plugin and include a sample."
-  },
-  {
-    "type": "chess",
-    "id": "b2f48b263e6aeb2f",
-    "text": "This is text in the new plugin. You can *double-click* to edit it too."
-  }
-]
+    {
+      "type": "paragraph",
+      "id": "907c018ccbc2779d",
+      "text": "This plugin displays a chess board populated with pieces in unicode \"algebraic\" notation. [https://github.com/WardCunningham/wiki-plugin-chess github]"
     },
-    "date": 1488077492000,
-    "certificate": "from mkplugin.sh"
-  }
-]
+    {
+      "type": "chess",
+      "id": "b2f48b263e6aeb2f",
+      "text": "♜a8 ♞b8 ♝c8 ♛d8 ♚e8 ♝f8 ♞g8 ♜h8\n♟a7 ♟b7 ♟c7 ♟d7 ♟e7 ♟f7 ♟g7 ♟h7\n\n\n♙a2 ♙b2 ♙c2 ♙d2 ♙e2 ♙f2 ♙g2 ♙h2\n♖a1 ♘b1 ♗c1 ♕d1 ♔e1 ♗f1 ♘g1 ♖h1"
+    },
+    {
+      "type": "paragraph",
+      "id": "60b596cd260334de",
+      "text": "Chess is played six kinds of pieces a checkerboard with rows numbered 1 to 8 and columns a to f. Different speakers use different languages to name the pieces but unicode offers universal glyphs for all in two colors."
+    },
+    {
+      "type": "paragraph",
+      "id": "6fcd25149fddb23f",
+      "text": "♛ ♚ ♝ ♞ ♜ ♟ black"
+    },
+    {
+      "type": "paragraph",
+      "id": "a7c4528bba77e1df",
+      "text": "♕ ♔ ♗ ♘ ♖ ♙ white"
+    },
+    {
+      "type": "paragraph",
+      "id": "4f2963f1ec6e4cad",
+      "text": "We markup the board positions using figurine algebraic notation of piece-column-row using positions from these letters, not the placement in text. [https://en.wikipedia.org/wiki/Algebraic_notation_(chess)#Figurine_algebraic_notation wikipedia]"
+    },
+    {
+      "type": "code",
+      "id": "2a5fe11e81ab7d14",
+      "text": "♜a8 ♞b8 ♝c8 ♛d8 ♚e8 ♝f8 ♞g8 ♜h8\n♟a7 ♟b7 ♟c7 ♟d7 ♟e7 ♟f7 ♟g7 ♟h7\n\n\n♙a2 ♙b2 ♙c2 ♙d2 ♙e2 ♙f2 ♙g2 ♙h2\n♖a1 ♘b1 ♗c1 ♕d1 ♔e1 ♗f1 ♘g1 ♖h1"
+    }
+  ],
+  "journal": [
+    {
+      "type": "create",
+      "item": {
+        "title": "About Chess Plugin",
+        "story": [
+          {
+            "type": "paragraph",
+            "id": "907c018ccbc2779d",
+            "text": "Here we describe the purpose of the plugin and include a sample."
+          },
+          {
+            "type": "chess",
+            "id": "b2f48b263e6aeb2f",
+            "text": "This is text in the new plugin. You can *double-click* to edit it too."
+          }
+        ]
+      },
+      "date": 1488077492000,
+      "certificate": "from mkplugin.sh"
+    },
+    {
+      "type": "edit",
+      "id": "907c018ccbc2779d",
+      "item": {
+        "type": "paragraph",
+        "id": "907c018ccbc2779d",
+        "text": "This plugin displays a chess board populated with pieces in unicode \"algebraic\" notation. [https://github.com/WardCunningham/wiki-plugin-chess github]"
+      },
+      "date": 1488146966664
+    },
+    {
+      "type": "add",
+      "item": {
+        "type": "paragraph",
+        "id": "60b596cd260334de",
+        "text": "Chess is played six kinds of pieces a checkerboard with rows numbered 1 to 8 and columns a to f. Different speakers use different languages to name the pieces but unicode offers universal glyphs for all in two colors."
+      },
+      "after": "b2f48b263e6aeb2f",
+      "id": "60b596cd260334de",
+      "date": 1488147039896
+    },
+    {
+      "type": "add",
+      "item": {
+        "type": "paragraph",
+        "id": "6fcd25149fddb23f",
+        "text": "♛ ♚ ♝ ♞ ♜ ♟ black"
+      },
+      "after": "60b596cd260334de",
+      "id": "6fcd25149fddb23f",
+      "date": 1488147048340
+    },
+    {
+      "type": "add",
+      "item": {
+        "type": "paragraph",
+        "id": "a7c4528bba77e1df",
+        "text": "♕ ♔ ♗ ♘ ♖ ♙ white"
+      },
+      "after": "6fcd25149fddb23f",
+      "id": "a7c4528bba77e1df",
+      "date": 1488147052000
+    },
+    {
+      "type": "add",
+      "item": {
+        "type": "paragraph",
+        "id": "4f2963f1ec6e4cad",
+        "text": "Here we markup the starting board positions using the \"algebraic\" notation of piece-column-row. Our markup gets positions from the letters, not the placement in text."
+      },
+      "after": "a7c4528bba77e1df",
+      "id": "4f2963f1ec6e4cad",
+      "date": 1488147061843
+    },
+    {
+      "type": "add",
+      "item": {
+        "type": "code",
+        "id": "2a5fe11e81ab7d14",
+        "text": "♙a2 ♙b2 ♙c2 ♙d2 ♙e2 ♙f2 ♙g2 ♙h2\n♖a1 ♘b1 ♗c1 ♕d1 ♔e1 ♗f1 ♘g1 ♖h1"
+      },
+      "after": "4f2963f1ec6e4cad",
+      "id": "2a5fe11e81ab7d14",
+      "date": 1488147072964
+    },
+    {
+      "type": "edit",
+      "id": "2a5fe11e81ab7d14",
+      "item": {
+        "type": "code",
+        "id": "2a5fe11e81ab7d14",
+        "text": "♜a8\t♞b8\t♝c8\t♛d8\t♚e8\t♝f8\t♞g8\t♜h8\n♟a7\t♟b7\t♟c7\t♟d7\t♟e7\t♟f7\t♟g7\t♟h7\n\n\n♙a2 ♙b2 ♙c2 ♙d2 ♙e2 ♙f2 ♙g2 ♙h2\n♖a1 ♘b1 ♗c1 ♕d1 ♔e1 ♗f1 ♘g1 ♖h1"
+      },
+      "date": 1488147106863
+    },
+    {
+      "type": "edit",
+      "id": "2a5fe11e81ab7d14",
+      "item": {
+        "type": "code",
+        "id": "2a5fe11e81ab7d14",
+        "text": "♜a8 ♞b8 ♝c8 ♛d8 ♚e8 ♝f8 ♞g8 ♜h8\n♟a7 ♟b7 ♟c7 ♟d7 ♟e7 ♟f7 ♟g7 ♟h7\n\n\n♙a2 ♙b2 ♙c2 ♙d2 ♙e2 ♙f2 ♙g2 ♙h2\n♖a1 ♘b1 ♗c1 ♕d1 ♔e1 ♗f1 ♘g1 ♖h1"
+      },
+      "date": 1488147165670
+    },
+    {
+      "type": "edit",
+      "id": "b2f48b263e6aeb2f",
+      "item": {
+        "type": "chess",
+        "id": "b2f48b263e6aeb2f",
+        "text": "♜a8 ♞b8 ♝c8 ♛d8 ♚e8 ♝f8 ♞g8 ♜h8\n♟a7 ♟b7 ♟c7 ♟d7 ♟e7 ♟f7 ♟g7 ♟h7\n\n\n♙a2 ♙b2 ♙c2 ♙d2 ♙e2 ♙f2 ♙g2 ♙h2\n♖a1 ♘b1 ♗c1 ♕d1 ♔e1 ♗f1 ♘g1 ♖h1"
+      },
+      "date": 1488147178341
+    },
+    {
+      "type": "edit",
+      "id": "4f2963f1ec6e4cad",
+      "item": {
+        "type": "paragraph",
+        "id": "4f2963f1ec6e4cad",
+        "text": "Here we markup the starting board positions using figurine algebraic notation of piece-column-row. Our markup gets positions from the letters, not the placement in text. [https://en.wikipedia.org/wiki/Algebraic_notation_(chess)#Figurine_algebraic_notation wikipedia]"
+      },
+      "date": 1488147280185
+    },
+    {
+      "type": "edit",
+      "id": "4f2963f1ec6e4cad",
+      "item": {
+        "type": "paragraph",
+        "id": "4f2963f1ec6e4cad",
+        "text": "We markup the board positions using figurine algebraic notation of piece-column-row using positions from these letters, not the placement in text. [https://en.wikipedia.org/wiki/Algebraic_notation_(chess)#Figurine_algebraic_notation wikipedia]"
+      },
+      "date": 1488147354133
+    }
+  ]
 }
