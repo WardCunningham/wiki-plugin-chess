@@ -2,6 +2,7 @@
   "name": "wiki-plugin-chess",
   "version": "1.1.1-pre1",
   "description": "Federated Wiki - Chess Plugin",
+  "type": "module",
   "keywords": [
     "chess",
     "wiki",
@@ -9,32 +10,39 @@
     "plugin"
   ],
   "author": {
-    "name": "Ward Cunningham",
-    "email": "ward@c2.com",
-    "url": "http://example.com"
+    "name": "Robert Best",
+    "email": "me@Robert.Best",
+    "url": "http://Robert.Best"
   },
-  "contributors": [],
+  "contributors": [
+    "Ward Cunningham <ward@c2.com>"
+  ],
   "scripts": {
-    "test": "mocha"
+    "build": "npm run clean; npm run test; node --no-warnings scripts/build-client.js",
+    "clean": "rm client/chess.js client/chess.js.map",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "cm-chessboard": "^8.7.7",
+    "chess.js": "^1.1.0"
   },
   "devDependencies": {
-    "grunt": "^1.0.1",
-    "grunt-contrib-coffee": "^1.0.0",
-    "grunt-contrib-watch": "^1.0.0",
+    "@eslint/js": "^9.17.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.17.0",
+    "globals": "^15.13.0",
     "grunt-git-authors": "^3.2.0",
-    "mocha": "^3.1.0",
-    "expect.js": "^0.3.1",
-    "grunt-mocha-test": "^0.13.2"
+    "prettier": "^3.4.2"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wardcunnigham/wiki-plugin-chess.git"
+    "url": "git+https://github.com/Bortseb/wiki-plugin-chess.git"
   },
   "bugs": {
-    "url": "https://github.com/wardcunnigham/wiki-plugin-chess/issues"
+    "url": "https://github.com/Bortseb/wiki-plugin-chess/issues"
   },
   "engines": {
-    "node": ">=0.10"
+    "node": ">=20.x"
   }
 }

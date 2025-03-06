@@ -1,11 +1,6 @@
 # Federated Wiki - Chess Plugin
 
-This plugin, type: chess, extends the markup of the federated wiki.
-
-## Build
-
-    npm install
-    grunt build
+This plugin enables Chess to be played over Federated Wiki.
 
 ## License
 

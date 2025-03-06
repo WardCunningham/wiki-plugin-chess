@@ -1,0 +1,4 @@
+Authors ordered by first contribution
+
+Ward Cunningham <ward@c2.com>
+Robert Best <me@Robert.Best>
