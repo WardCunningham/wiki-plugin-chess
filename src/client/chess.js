@@ -7,8 +7,7 @@ import { Accessibility } from "cm-chessboard/src/extensions/accessibility/Access
 if (typeof window !== "undefined" && window !== null) {
   if (!window.plugins.chess) {
     window.plugins.chess = { emit, bind }
-    if (typeof window.chessListener !== "undefined"
-      || window.chessListener == null) {
+    if (typeof window.chessListener !== "undefined" || window.chessListener == null) {
       console.log('**** Adding chess listener')
       window.chessListener = chessListener
       window.addEventListener("message", chessListener)
@@ -67,7 +66,17 @@ async function bind($item, item) {
     })
     updateGameStatus()
     board.enableMoveInput(inputHandler, COLOR.white)
+
     function inputHandler(event) {
+      // console.log({ event })
+      if (event.type === INPUT_EVENT_TYPE.movingOverSquare) {
+        return // ignore this event
+      }
+
+      if (event.type !== INPUT_EVENT_TYPE.moveInputFinished) {
+        event.chessboard.removeLegalMovesMarkers()
+      }
+
       if (event.type === INPUT_EVENT_TYPE.moveInputStarted) {
         // mark legal moves
         const moves = chess.moves({ square: event.squareFrom, verbose: true })
@@ -82,6 +91,7 @@ async function bind($item, item) {
               makeEngineMove(event.chessboard)
             })
           })
+          return result
         } catch {
           // promotion?
           let possibleMoves = chess.moves({ square: event.squareFrom, verbose: true })
@@ -107,23 +117,26 @@ async function bind($item, item) {
         if (event.legalMove) {
           event.chessboard.disableMoveInput()
         }
-      } if (event.type !== INPUT_EVENT_TYPE.moveInputFinished) {
-        event.chessboard.removeLegalMovesMarkers()
-      }
-
-      if (event.type === INPUT_EVENT_TYPE.movingOverSquare) {
-        return // ignore this event
       }
     }
+
     function makeEngineMove(chessboard) {
+      // change this to make more random
+      let seed = 71
+      let random = function () {
+        const x = Math.sin(seed++) * 10000;
+        return x - Math.floor(x);
+        // return Math.random()
+      }
+
       const possibleMoves = chess.moves({ verbose: true })
       if (possibleMoves.length > 0) {
-        const randomIndex = Math.floor(Math.random() * possibleMoves.length)
+        const randomIndex = Math.floor(random() * possibleMoves.length)
         const randomMove = possibleMoves[randomIndex]
         setTimeout(() => { // smoother with 500ms delay
           chess.move({ from: randomMove.from, to: randomMove.to })
           chessboard.setPosition(chess.fen(), true)
-          // chessboard.enableMoveInput(inputHandler, COLOR.white)
+          chessboard.enableMoveInput(inputHandler, COLOR.white)
         }, 500)
       }
       updateGameStatus()
@@ -151,7 +164,7 @@ async function bind($item, item) {
       }
 
       document.getElementById('gameStatus').innerHTML = statusHTML
-      if (chess.isGameOver()) console.log(chess.PGN())
+      if (chess.isGameOver()) console.log(chess.pgn())
     }
   } catch (err) {
     console.log('makePGN', err)
@@ -257,8 +270,6 @@ const expand = text => {
 
 export const chess = typeof window == 'undefined' ? { expand } : undefined
 
-// TODO game stops working after first pawn promotion
-// TODO for some reason our legal move markers disappear after hover, but not on original example here https://shaack.com/projekte/cm-chessboard/examples/validate-moves.html
-// TODO if item text is empty, or not able to be parsed as png, just load a fresh game against random bot, randomize who goes first
+// TODO if item text is empty, or not able to be parsed as pgn, just load a fresh game against random bot, randomize who goes first
 // TODO make backwards compatible with previous notation
 // TODO if there is parseable PGN, load it... otherwise try and make sense of it to parse

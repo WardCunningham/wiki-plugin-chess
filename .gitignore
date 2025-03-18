@@ -5,3 +5,4 @@ meta-client.json
 client/chess.js
 client/chess.js.map
 coverage
+package-lock.json
