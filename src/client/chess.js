@@ -1,8 +1,10 @@
-import { Chess } from 'chess.js'
+import { Chess, validateFen } from 'chess.js'
 import { INPUT_EVENT_TYPE, COLOR, Chessboard, BORDER_TYPE } from "cm-chessboard/src/Chessboard.js"
 import { MARKER_TYPE, Markers } from "cm-chessboard/src/extensions/markers/Markers.js"
 import { PROMOTION_DIALOG_RESULT_TYPE, PromotionDialog } from "cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js"
 import { Accessibility } from "cm-chessboard/src/extensions/accessibility/Accessibility.js"
+
+let mode = 'game' // A global variable to keep track of the mode of the chess plugin, game is assumed by default.
 
 if (typeof window !== "undefined" && window !== null) {
   if (!window.plugins.chess) {
@@ -48,6 +50,9 @@ async function bind($item, item) {
   try {
     const chess = new Chess()
     let PGN = await makePGN($item, cleanBeforeMakePGN(item))
+    console.log({ PGN })
+    const valid = validateFen(PGN)
+    console.log({ valid })
     const tableTime = Date.now()
     $item.find('.table').html(`
       <div id="board-${tableTime}" class="board board-large nosort" style="width: 400px"></div>
@@ -65,8 +70,16 @@ async function bind($item, item) {
         { class: Accessibility, props: { visuallyHidden: true } }
       ]
     })
+    board.setPosition(PGN, false)
+
     updateGameStatus()
-    board.enableMoveInput(inputHandler, COLOR.white)
+
+    if (mode === 'position') {
+      board.disableMoveInput()
+    } else if (mode === 'game') {
+      board.enableMoveInput(inputHandler, COLOR.white)
+    }
+
 
     function inputHandler(event) {
       if (event.type === INPUT_EVENT_TYPE.movingOverSquare) {
@@ -223,8 +236,11 @@ function cleanBeforeMakePGN(item) {
 }
 
 async function makePGN($item, item) {
+  console.log(`${item.text}`)
   if (containsChessFigurines(item.text)) {
-    console.log('contains chess figurines')
+    const FEN = figurinePositionsToFEN(item.text)
+    mode = 'position'
+    return FEN
   }
   return item.text // This is the raw item text, this function need to return valid PGN
 
@@ -237,6 +253,69 @@ async function makePGN($item, item) {
     const figurineRegex = /[\u2654-\u265F]/;  // Matches any of ♔♕♖♗♘♙♚♛♜♝♞♟
     return figurineRegex.test(text);
   }
+
+  function figurinePositionsToFEN(positionText) {
+    // Initialize 8x8 empty board
+    const board = Array(8).fill().map(() => Array(8).fill('1'));
+
+    // Map figurine pieces to FEN characters
+    const pieceMap = {
+      '♔': 'K', '♕': 'Q', '♖': 'R', '♗': 'B', '♘': 'N', '♙': 'P',
+      '♚': 'k', '♛': 'q', '♜': 'r', '♝': 'b', '♞': 'n', '♟': 'p'
+    };
+
+    // Regular expression to match piece and position
+    // Matches: ♔e1, ♟a7, etc.
+    const pieceRegex = /([♔♕♖♗♘♙♚♛♜♝♞♟])([a-h][1-8])/g;
+
+    // Process each piece position
+    const matches = [...positionText.matchAll(pieceRegex)];
+    for (const [_, piece, position] of matches) {
+      const file = position.charCodeAt(0) - 'a'.charCodeAt(0); // Convert a-h to 0-7
+      const rank = 8 - parseInt(position[1]); // Convert 1-8 to 0-7 (inverted)
+      board[rank][file] = pieceMap[piece] || '1';
+    }
+
+    // Convert board array to FEN string
+    const fen = board.map(rank => {
+      let rankString = '';
+      let emptyCount = 0;
+
+      for (const square of rank) {
+        if (square === '1') {
+          emptyCount++;
+        } else {
+          if (emptyCount > 0) {
+            rankString += emptyCount;
+            emptyCount = 0;
+          }
+          rankString += square;
+        }
+      }
+
+      if (emptyCount > 0) {
+        rankString += emptyCount;
+      }
+
+      return rankString;
+    }).join('/');
+
+    // Add default FEN parameters
+    return `${fen} w KQkq - 0 1`;
+  }
+
+  // Example usage:
+  /*
+  const positionText = `
+  ♜b8 ♞c6 ♝c8 ♛d8 ♚e8 ♝f8 ♞g8 ♜h8
+  ♟a7 ♟b7 ♟c7 ♟d7 ♟e7 ♟f7 ♟g7 ♟h7
+  ♙a2 ♙b2 ♙c2 ♙d2 ♙e2 ♙f2 ♙g2 ♙h2
+  ♖a1 ♘b1 ♗c1 ♕d1 ♔e1 ♗f1 ♘g1 ♖h1
+  `;
+  
+  console.log(figurinePositionsToFEN(positionText));
+  // Output: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+  */
 }
 
 function chessListener(event) {
@@ -278,7 +357,9 @@ const expand = text => {
 
 export const chess = typeof window == 'undefined' ? { expand } : undefined
 
-// TODO convert the old wiki chess position in in figurine notation, and make a function that will convert it to a FEN string.
 // TODO if item text is empty, or not able to be parsed as pgn, just load a fresh game against random bot, randomize who goes first
-// TODO make backwards compatible with previous notation
 // TODO if there is parseable PGN, load it... otherwise try and make sense of it to parse
+
+//  MODES for the chess plugin: 1. A game 2. A position 3. editor 4. puzzle player
+
+// The item text can be recognized as FEN, PGN, the original figurine notation, otherwise just show a fresh game.
