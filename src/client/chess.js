@@ -50,12 +50,13 @@ async function bind($item, item) {
     let PGN = await makePGN($item, cleanBeforeMakePGN(item))
     const tableTime = Date.now()
     $item.find('.table').html(`
-      <div id="board-${tableTime}" class="board board-large" style="width: 400px"></div>
+      <div id="board-${tableTime}" class="board board-large nosort" style="width: 400px"></div>
       <p id="gameStatus"></p>
     `)
     const board = new Chessboard(document.getElementById(`board-${tableTime}`), {
       position: chess.fen(),
       assetsUrl: "/plugins/chess/assets/",
+      responsive: true, // resize the board automatically to the size of the context element
       style: { borderType: BORDER_TYPE.none, pieces: { file: "pieces/staunty.svg" }, animationDuration: 300 },
       orientation: COLOR.white,
       extensions: [
@@ -68,7 +69,6 @@ async function bind($item, item) {
     board.enableMoveInput(inputHandler, COLOR.white)
 
     function inputHandler(event) {
-      // console.log({ event })
       if (event.type === INPUT_EVENT_TYPE.movingOverSquare) {
         return // ignore this event
       }
@@ -112,10 +112,10 @@ async function bind($item, item) {
             }
           }
         }
-        return
       } else if (event.type === INPUT_EVENT_TYPE.moveInputFinished) {
         if (event.legalMove) {
           event.chessboard.disableMoveInput()
+          return true
         }
       }
     }
@@ -223,11 +223,19 @@ function cleanBeforeMakePGN(item) {
 }
 
 async function makePGN($item, item) {
+  if (containsChessFigurines(item.text)) {
+    console.log('contains chess figurines')
+  }
   return item.text // This is the raw item text, this function need to return valid PGN
 
   function trouble(text, detail) {
     // console.log(text,detail)
     throw new Error(text + "\n" + detail)
+  }
+
+  function containsChessFigurines(text) {
+    const figurineRegex = /[\u2654-\u265F]/;  // Matches any of ♔♕♖♗♘♙♚♛♜♝♞♟
+    return figurineRegex.test(text);
   }
 }
 
@@ -270,6 +278,7 @@ const expand = text => {
 
 export const chess = typeof window == 'undefined' ? { expand } : undefined
 
+// TODO convert the old wiki chess position in in figurine notation, and make a function that will convert it to a FEN string.
 // TODO if item text is empty, or not able to be parsed as pgn, just load a fresh game against random bot, randomize who goes first
 // TODO make backwards compatible with previous notation
 // TODO if there is parseable PGN, load it... otherwise try and make sense of it to parse
