@@ -28,7 +28,6 @@ function emit($item, item) {
         .filter(e => e.ownerNode.hasAttribute('href'))
         .filter(e => e.href.endsWith(`/plugins/chess/${name}.css`)).length
     ) {
-      // console.log(`adding ${name} style`)
       const link = document.createElement('link')
       link.rel = 'stylesheet'
       link.href = `/plugins/chess/${name}.css`
@@ -56,13 +55,11 @@ async function bind($item, item) {
   try {
     const chess = new Chess()
     let format = await determineFormat(item)
-    console.log({ format })
     let position,
       valid = null
     switch (format) {
       case 'FIGURINE':
         valid = validateFen(figurineToFEN(item.text))
-        console.log({ valid })
         if (valid) {
           position = figurineToFEN(item.text)
           mode = 'POSITION'
@@ -73,7 +70,6 @@ async function bind($item, item) {
         break
       case 'FEN':
         valid = validateFen(item.text)
-        console.log({ valid })
         if (valid.ok) {
           position = item.text
           mode = 'POSITION'
@@ -87,7 +83,6 @@ async function bind($item, item) {
           chess.loadPgn(item.text)
           let PGN = chess.pgn()
           position = chess.fen()
-          console.log({ position, PGN })
           mode = 'GAME'
         } catch (error) {
           console.error('Error loading PGN:', error)
@@ -305,6 +300,7 @@ function trouble(text, detail) {
   throw new Error(text + '\n' + detail)
 }
 
+// Converts figurine notation to FEN string
 function figurineToFEN(positionText) {
   // Initialize 8x8 empty board
   const board = Array(8)
