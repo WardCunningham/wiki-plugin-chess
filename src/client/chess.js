@@ -1,27 +1,33 @@
 import { Chess, validateFen } from 'chess.js'
-import { INPUT_EVENT_TYPE, COLOR, Chessboard, BORDER_TYPE } from "cm-chessboard/src/Chessboard.js"
-import { MARKER_TYPE, Markers } from "cm-chessboard/src/extensions/markers/Markers.js"
-import { PROMOTION_DIALOG_RESULT_TYPE, PromotionDialog } from "cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js"
-import { Accessibility } from "cm-chessboard/src/extensions/accessibility/Accessibility.js"
+import { INPUT_EVENT_TYPE, COLOR, Chessboard, BORDER_TYPE } from 'cm-chessboard/src/Chessboard.js'
+import { MARKER_TYPE, Markers } from 'cm-chessboard/src/extensions/markers/Markers.js'
+import {
+  PROMOTION_DIALOG_RESULT_TYPE,
+  PromotionDialog,
+} from 'cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js'
+import { Accessibility } from 'cm-chessboard/src/extensions/accessibility/Accessibility.js'
 
 let mode = 'GAME' // A global variable to keep track of the mode of the chess plugin, GAME is assumed by default.
 
-if (typeof window !== "undefined" && window !== null) {
+if (typeof window !== 'undefined' && window !== null) {
   if (!window.plugins.chess) {
     window.plugins.chess = { emit, bind }
-    if (typeof window.chessListener !== "undefined" || window.chessListener == null) {
+    if (typeof window.chessListener !== 'undefined' || window.chessListener == null) {
       console.log('**** Adding chess listener')
       window.chessListener = chessListener
-      window.addEventListener("message", chessListener)
+      window.addEventListener('message', chessListener)
     }
   }
 }
 
 function emit($item, item) {
   // append css files to head
-  ["chessboard", "markers", "promotion-dialog"].forEach((name) => {
-    if (!([...document.styleSheets].filter((e) => e.ownerNode.hasAttribute('href'))
-      .filter((e) => e.href.endsWith(`/plugins/chess/${name}.css`)).length)) {
+  ;['chessboard', 'markers', 'promotion-dialog'].forEach(name => {
+    if (
+      ![...document.styleSheets]
+        .filter(e => e.ownerNode.hasAttribute('href'))
+        .filter(e => e.href.endsWith(`/plugins/chess/${name}.css`)).length
+    ) {
       // console.log(`adding ${name} style`)
       const link = document.createElement('link')
       link.rel = 'stylesheet'
@@ -51,31 +57,32 @@ async function bind($item, item) {
     const chess = new Chess()
     let format = await determineFormat(item)
     console.log({ format })
-    let position, valid = null
+    let position,
+      valid = null
     switch (format) {
-      case "FIGURINE":
+      case 'FIGURINE':
         valid = validateFen(figurineToFEN(item.text))
         console.log({ valid })
         if (valid) {
-          position = figurineToFEN(item.text);
+          position = figurineToFEN(item.text)
           mode = 'POSITION'
         } else {
           trouble('Invalid figurine notation', item.text)
           mode = 'POSITION'
         }
-        break;
-      case "FEN":
+        break
+      case 'FEN':
         valid = validateFen(item.text)
         console.log({ valid })
         if (valid.ok) {
-          position = item.text;
+          position = item.text
           mode = 'POSITION'
         } else {
           trouble('Invalid FEN notation', item.text)
           mode = 'POSITION'
         }
-        break;
-      case "PGN":
+        break
+      case 'PGN':
         try {
           chess.loadPgn(item.text)
           let PGN = chess.pgn()
@@ -87,12 +94,12 @@ async function bind($item, item) {
           trouble('Invalid PGN notation', item.text)
           mode = 'POSITION'
         }
-        break;
-      case "UNKNOWN":
+        break
+      case 'UNKNOWN':
         console.log('Unknown format, loading a new game')
         position = chess.fen()
         mode = 'GAME'
-        break;
+        break
     }
     const tableTime = Date.now()
     $item.find('.table').html(`
@@ -105,21 +112,21 @@ async function bind($item, item) {
       </div>
     `)
     document.getElementById(`download-${tableTime}`).addEventListener('click', () => {
-      const content = mode === 'GAME' ? chess.pgn() : chess.fen();
-      const filename = mode === 'GAME' ? 'game.pgn' : 'position.fen';
-      download(filename, content);
-    });
+      const content = mode === 'GAME' ? chess.pgn() : chess.fen()
+      const filename = mode === 'GAME' ? 'game.pgn' : 'position.fen'
+      download(filename, content)
+    })
     const board = new Chessboard(document.getElementById(`board-${tableTime}`), {
       position: chess.fen(),
-      assetsUrl: "/plugins/chess/assets/",
+      assetsUrl: '/plugins/chess/assets/',
       responsive: true, // resize the board automatically to the size of the context element
-      style: { borderType: BORDER_TYPE.none, pieces: { file: "pieces/staunty.svg" }, animationDuration: 300 },
+      style: { borderType: BORDER_TYPE.none, pieces: { file: 'pieces/staunty.svg' }, animationDuration: 300 },
       orientation: COLOR.white,
       extensions: [
         { class: Markers, props: { autoMarkers: MARKER_TYPE.square } },
         { class: PromotionDialog },
-        { class: Accessibility, props: { visuallyHidden: true } }
-      ]
+        { class: Accessibility, props: { visuallyHidden: true } },
+      ],
     })
     board.setPosition(position, false)
 
@@ -130,7 +137,6 @@ async function bind($item, item) {
     } else if (mode === 'GAME') {
       board.enableMoveInput(inputHandler, COLOR.white)
     }
-
 
     function inputHandler(event) {
       if (event.type === INPUT_EVENT_TYPE.movingOverSquare) {
@@ -150,8 +156,10 @@ async function bind($item, item) {
         const move = { from: event.squareFrom, to: event.squareTo, promotion: event.promotion }
         try {
           const result = chess.move(move)
-          event.chessboard.state.moveInputProcess.then(() => { // wait for the move input process has finished
-            event.chessboard.setPosition(chess.fen(), true).then(() => { // update position, maybe castled and wait for animation has finished
+          event.chessboard.state.moveInputProcess.then(() => {
+            // wait for the move input process has finished
+            event.chessboard.setPosition(chess.fen(), true).then(() => {
+              // update position, maybe castled and wait for animation has finished
               makeEngineMove(event.chessboard)
             })
           })
@@ -161,7 +169,7 @@ async function bind($item, item) {
           let possibleMoves = chess.moves({ square: event.squareFrom, verbose: true })
           for (const possibleMove of possibleMoves) {
             if (possibleMove.promotion && possibleMove.to === event.squareTo) {
-              event.chessboard.showPromotionDialog(event.squareTo, COLOR.white, (result) => {
+              event.chessboard.showPromotionDialog(event.squareTo, COLOR.white, result => {
                 if (result.type === PROMOTION_DIALOG_RESULT_TYPE.pieceSelected) {
                   chess.move({ from: event.squareFrom, to: event.squareTo, promotion: result.piece.charAt(1) })
                   event.chessboard.setPosition(chess.fen(), true)
@@ -188,8 +196,8 @@ async function bind($item, item) {
       // change this to make more random
       let seed = 71
       let random = function () {
-        const x = Math.sin(seed++) * 10000;
-        return x - Math.floor(x);
+        const x = Math.sin(seed++) * 10000
+        return x - Math.floor(x)
         // return Math.random()
       }
 
@@ -197,7 +205,8 @@ async function bind($item, item) {
       if (possibleMoves.length > 0) {
         const randomIndex = Math.floor(random() * possibleMoves.length)
         const randomMove = possibleMoves[randomIndex]
-        setTimeout(() => { // smoother with 500ms delay
+        setTimeout(() => {
+          // smoother with 500ms delay
           chess.move({ from: randomMove.from, to: randomMove.to })
           chessboard.setPosition(chess.fen(), true)
           chessboard.enableMoveInput(inputHandler, COLOR.white)
@@ -234,16 +243,14 @@ async function bind($item, item) {
     console.log({ err })
     $item.html(message(err.message))
   }
-  $item.on('dblclick', () => { return wiki.textEditor($item, item) })
+  $item.on('dblclick', () => {
+    return wiki.textEditor($item, item)
+  })
 
   $item.on('click', event => {
     // console.log("Clicked on item!")
-
-
     // const { target } = event
-
     // const { action } = (target.closest("a") || {}).dataset
-
     // if (!action) {
     //   return
     // }
@@ -283,81 +290,98 @@ async function bind($item, item) {
 
 async function determineFormat(item) {
   if (/[\u2654-\u265F]/.test(item.text)) {
-    return "FIGURINE" // Matches any of ♔♕♖♗♘♙♚♛♜♝♞♟
+    return 'FIGURINE' // Matches any of ♔♕♖♗♘♙♚♛♜♝♞♟
   } else if ((item.text.match(/\//g) || []).length === 7) {
-    return "FEN"  // FEN notation has exactly 7 slashes
+    return 'FEN' // FEN notation has exactly 7 slashes
   } else if (/\[([^\]]*)\]/g.test(item.text)) {
-    return "PGN"
+    return 'PGN'
   } else {
-    return "UNKNOWN"
+    return 'UNKNOWN'
   }
 }
 
 function trouble(text, detail) {
   // console.log(text,detail)
-  throw new Error(text + "\n" + detail)
+  throw new Error(text + '\n' + detail)
 }
 
 function figurineToFEN(positionText) {
   // Initialize 8x8 empty board
-  const board = Array(8).fill().map(() => Array(8).fill('1'));
+  const board = Array(8)
+    .fill()
+    .map(() => Array(8).fill('1'))
 
   // Map figurine pieces to FEN characters
   const pieceMap = {
-    '♔': 'K', '♕': 'Q', '♖': 'R', '♗': 'B', '♘': 'N', '♙': 'P',
-    '♚': 'k', '♛': 'q', '♜': 'r', '♝': 'b', '♞': 'n', '♟': 'p'
-  };
+    '♔': 'K',
+    '♕': 'Q',
+    '♖': 'R',
+    '♗': 'B',
+    '♘': 'N',
+    '♙': 'P',
+    '♚': 'k',
+    '♛': 'q',
+    '♜': 'r',
+    '♝': 'b',
+    '♞': 'n',
+    '♟': 'p',
+  }
 
   // Regular expression to match piece and position
   // Matches: ♔e1, ♟a7, etc.
-  const pieceRegex = /([♔♕♖♗♘♙♚♛♜♝♞♟])([a-h][1-8])/g;
+  const pieceRegex = /([♔♕♖♗♘♙♚♛♜♝♞♟])([a-h][1-8])/g
 
   // Process each piece position
-  const matches = [...positionText.matchAll(pieceRegex)];
+  const matches = [...positionText.matchAll(pieceRegex)]
   for (const [_, piece, position] of matches) {
-    const file = position.charCodeAt(0) - 'a'.charCodeAt(0); // Convert a-h to 0-7
-    const rank = 8 - parseInt(position[1]); // Convert 1-8 to 0-7 (inverted)
-    board[rank][file] = pieceMap[piece] || '1';
+    const file = position.charCodeAt(0) - 'a'.charCodeAt(0) // Convert a-h to 0-7
+    const rank = 8 - parseInt(position[1]) // Convert 1-8 to 0-7 (inverted)
+    board[rank][file] = pieceMap[piece] || '1'
   }
 
   // Convert board array to FEN string
-  const fen = board.map(rank => {
-    let rankString = '';
-    let emptyCount = 0;
+  const fen = board
+    .map(rank => {
+      let rankString = ''
+      let emptyCount = 0
 
-    for (const square of rank) {
-      if (square === '1') {
-        emptyCount++;
-      } else {
-        if (emptyCount > 0) {
-          rankString += emptyCount;
-          emptyCount = 0;
+      for (const square of rank) {
+        if (square === '1') {
+          emptyCount++
+        } else {
+          if (emptyCount > 0) {
+            rankString += emptyCount
+            emptyCount = 0
+          }
+          rankString += square
         }
-        rankString += square;
       }
-    }
 
-    if (emptyCount > 0) {
-      rankString += emptyCount;
-    }
+      if (emptyCount > 0) {
+        rankString += emptyCount
+      }
 
-    return rankString;
-  }).join('/');
+      return rankString
+    })
+    .join('/')
 
   // Add default FEN parameters
-  return `${fen} w KQkq - 0 1`;
+  return `${fen} w KQkq - 0 1`
 }
-
 
 function chessListener(event) {
   // only continue if event is from a chess popup.
   // events from a popup window will have an opener
   // ensure that the popup window is one of ours
   if (!event.source.opener || event.source.location.pathname !== '/plugins/chess/dialog/') {
-    if (wiki.debug) { console.log('chessListener - not for us', { event }) }
+    if (wiki.debug) {
+      console.log('chessListener - not for us', { event })
+    }
     return
   }
-  if (wiki.debug) { console.log('chessListener - ours', { event }) }
+  if (wiki.debug) {
+    console.log('chessListener - ours', { event })
+  }
 
   const { data } = event
   const { action, keepLineup = false, pageKey = null, title = null, context = null } = data
@@ -373,7 +397,7 @@ function chessListener(event) {
       wiki.doInternalLink(title, $page)
       break
     default:
-      console.error({ where: 'chessListener', message: "unknown action", data })
+      console.error({ where: 'chessListener', message: 'unknown action', data })
   }
 }
 

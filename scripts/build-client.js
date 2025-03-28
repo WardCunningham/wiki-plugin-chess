@@ -15,7 +15,7 @@ let results = await esbuild.build({
   sourcemap: true,
   logLevel: 'info',
   metafile: true,
-  outdir: "client/",
+  outdir: 'client/',
 })
 
 await fs.writeFile('meta-client.json', JSON.stringify(results.metafile))

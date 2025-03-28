@@ -10,7 +10,7 @@ body {
 .page {
   margin: 8px;
   outline: none;
-  box-shadow: 2px 1px 4px rgba(0,0,0,0.2);
+  box-shadow: 2px 1px 4px rgba(0, 0, 0, 0.2);
   background: #eee;
   padding: 8px;
   position: absolute;
@@ -23,6 +23,7 @@ svg {
   cursor: move;
 }
 
-.node, .edge {
+.node,
+.edge {
   cursor: pointer;
 }
