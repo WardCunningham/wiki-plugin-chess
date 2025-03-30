@@ -1,11 +1,19 @@
 import { Chess, validateFen } from 'chess.js'
 import { INPUT_EVENT_TYPE, COLOR, Chessboard, BORDER_TYPE } from 'cm-chessboard/src/Chessboard.js'
 import { MARKER_TYPE, Markers } from 'cm-chessboard/src/extensions/markers/Markers.js'
-import {
-  PROMOTION_DIALOG_RESULT_TYPE,
-  PromotionDialog,
-} from 'cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js'
+import { PROMOTION_DIALOG_RESULT_TYPE, PromotionDialog } from 'cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js'
 import { Accessibility } from 'cm-chessboard/src/extensions/accessibility/Accessibility.js'
+
+const PLAYER_ICONS = {
+  white: '♔',
+  black: '♚'
+};
+
+const GAME_TYPE = {
+  HUMAN_BOT: 'H-B',
+  BOT_BOT: 'B-B',
+  HUMAN_HUMAN: 'H-H'
+};
 
 let mode = 'GAME' // A global variable to keep track of the mode of the chess plugin, GAME is assumed by default.
 
@@ -55,8 +63,8 @@ async function bind($item, item) {
   try {
     const chess = new Chess()
     let format = await determineFormat(item)
-    let position,
-      valid = null
+    let position, valid, gameInfo = null
+
     switch (format) {
       case 'FIGURINE':
         valid = validateFen(figurineToFEN(item.text))
@@ -82,8 +90,10 @@ async function bind($item, item) {
         try {
           chess.loadPgn(item.text)
           let PGN = chess.pgn()
+          gameInfo = decodePGN(PGN);
           position = chess.fen()
           mode = 'GAME'
+          console.log({ PGN, position, gameInfo })
         } catch (error) {
           console.error('Error loading PGN:', error)
           trouble('Invalid PGN notation', item.text)
@@ -96,11 +106,54 @@ async function bind($item, item) {
         mode = 'GAME'
         break
     }
+
     const tableTime = Date.now()
     $item.find('.table').html(`
-      <div style="display: flex; flex-direction: column; align-items: center;">
-        <div id="board-${tableTime}" class="board board-large nosort" style="width: 400px"></div>
+      <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
+        <div class="chess-container" style="border: 1px solid #333; ">
+          <button id="flip-${tableTime}" class="btn btn-sm" style="position: absolute; top: 10px; right: 10px;">
+            Flip Board
+          </button>
+          <div id="player-top-${tableTime}" class="player-info" style="width: 400px; margin: 10px 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="piece-icon" style="font-size: 24px;"></span>
+              <div style="flex-grow: 1; display: flex; gap: 10px;">
+                <input type="text" class="form-control player-name" data-color=""
+                  oninput="this.nextElementSibling.style.display = this.value ? 'none' : 'block'">
+                <button class="btn btn-sm sit-button" style="display: none;">Sit</button>
+              </div>
+            </div>
+          </div>
+          <div id="board-${tableTime}" class="board board-large nosort" style="width: 400px"></div>
+          <div id="player-bottom-${tableTime}" class="player-info" style="width: 400px; margin: 10px 0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="piece-icon" style="font-size: 24px;"></span>
+              <div style="flex-grow: 1; display: flex; gap: 10px;">
+                <input type="text" class="form-control player-name" data-color=""
+                  oninput="this.nextElementSibling.style.display = this.value ? 'none' : 'block'">
+                <button class="btn btn-sm sit-button" style="display: none;">Sit</button>
+              </div>
+            </div>
+          </div>
+        </div>
         <p id="gameStatus"></p>
+        ${gameInfo ? `
+          <details class="pgn-details" style="width: 80%; margin: 10px 0;">
+            <summary style="cursor: pointer; padding: 5px; background: #f5f5f5; border: 1px solid #ddd;">
+              Game Information
+            </summary>
+            <div style="padding: 10px; border: 1px solid #ddd; border-top: none;">
+              <div class="pgn-tags" style="display: grid; grid-template-columns: auto 1fr; gap: 5px; align-items: center;">
+                ${Object.entries(gameInfo)
+          .filter(([key]) => key !== 'moves')
+          .map(([key, value]) => `
+                    <label for="${key}-${tableTime}">${key}:</label>
+                    <input id="${key}-${tableTime}" type="text" value="${value}" class="form-control">
+                  `).join('')}
+              </div>
+            </div>
+          </details>
+        ` : ''}
         <button id="download-${tableTime}" class="btn btn-sm" style="margin-top: 10px;">
           Download ${mode === 'GAME' ? 'PGN' : 'FEN'}
         </button>
@@ -116,7 +169,7 @@ async function bind($item, item) {
       assetsUrl: '/plugins/chess/assets/',
       responsive: true, // resize the board automatically to the size of the context element
       style: { borderType: BORDER_TYPE.none, pieces: { file: 'pieces/staunty.svg' }, animationDuration: 300 },
-      orientation: COLOR.white,
+      orientation: chess.turn() === 'w' ? COLOR.white : COLOR.black,
       extensions: [
         { class: Markers, props: { autoMarkers: MARKER_TYPE.square } },
         { class: PromotionDialog },
@@ -125,12 +178,19 @@ async function bind($item, item) {
     })
     board.setPosition(position, false)
 
+    document.getElementById(`flip-${tableTime}`).addEventListener('click', () => {
+      const newOrientation = board.getOrientation() === COLOR.white ? COLOR.black : COLOR.white;
+      board.setOrientation(newOrientation);
+      updatePlayerBoxes(newOrientation);
+    });
+
     updateGameStatus()
 
     if (mode === 'POSITION') {
       board.disableMoveInput()
     } else if (mode === 'GAME') {
-      board.enableMoveInput(inputHandler, COLOR.white)
+      console.log(`enabling movement for ${chess.turn()}`)
+      board.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
     }
 
     function inputHandler(event) {
@@ -155,7 +215,12 @@ async function bind($item, item) {
             // wait for the move input process has finished
             event.chessboard.setPosition(chess.fen(), true).then(() => {
               // update position, maybe castled and wait for animation has finished
-              makeEngineMove(event.chessboard)
+              if (gameInfo.gameType !== GAME_TYPE.HUMAN_HUMAN) {
+                makeEngineMove(event.chessboard)
+              } else {
+                console.log(`enabling movement for ${chess.turn()}`)
+                event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
+              }
             })
           })
           return result
@@ -168,10 +233,16 @@ async function bind($item, item) {
                 if (result.type === PROMOTION_DIALOG_RESULT_TYPE.pieceSelected) {
                   chess.move({ from: event.squareFrom, to: event.squareTo, promotion: result.piece.charAt(1) })
                   event.chessboard.setPosition(chess.fen(), true)
-                  makeEngineMove(event.chessboard)
+                  if (gameInfo.gameType !== GAME_TYPE.HUMAN_HUMAN) {
+                    makeEngineMove(event.chessboard)
+                  } else {
+                    console.log(`enabling movement for ${chess.turn()}`)
+                    event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
+                  }
                 } else {
                   // promotion canceled
-                  event.chessboard.enableMoveInput(inputHandler, COLOR.white)
+                  console.log(`enabling movement for ${chess.turn()}`)
+                  event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
                   event.chessboard.setPosition(chess.fen(), true)
                 }
               })
@@ -204,7 +275,8 @@ async function bind($item, item) {
           // smoother with 500ms delay
           chess.move({ from: randomMove.from, to: randomMove.to })
           chessboard.setPosition(chess.fen(), true)
-          chessboard.enableMoveInput(inputHandler, COLOR.white)
+          console.log(`enabling movement for ${chess.turn()}`)
+          chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
         }, 500)
       }
       updateGameStatus()
@@ -234,6 +306,50 @@ async function bind($item, item) {
       document.getElementById('gameStatus').innerHTML = statusHTML
       if (chess.isGameOver()) console.log(chess.pgn())
     }
+
+    function updatePlayerBoxes(orientation) {
+      const topBox = document.getElementById(`player-top-${tableTime}`);
+      const bottomBox = document.getElementById(`player-bottom-${tableTime}`);
+
+      const blackBox = orientation === COLOR.white ? topBox : bottomBox;
+      const whiteBox = orientation === COLOR.white ? bottomBox : topBox;
+
+      // Update black player box
+      blackBox.className = 'player-info black-player';
+      blackBox.querySelector('.piece-icon').textContent = PLAYER_ICONS.black;
+      const blackInput = blackBox.querySelector('.player-name');
+      blackInput.value = gameInfo?.black || '';
+      blackInput.dataset.color = 'black';
+      const blackSitBtn = blackBox.querySelector('.sit-button');
+      blackSitBtn.style.display = blackInput.value ? 'none' : 'block';
+      blackSitBtn.dataset.color = 'black';
+
+      // Update white player box
+      whiteBox.className = 'player-info white-player';
+      whiteBox.querySelector('.piece-icon').textContent = PLAYER_ICONS.white;
+      const whiteInput = whiteBox.querySelector('.player-name');
+      whiteInput.value = gameInfo?.white || '';
+      whiteInput.dataset.color = 'white';
+      const whiteSitBtn = whiteBox.querySelector('.sit-button');
+      whiteSitBtn.style.display = whiteInput.value ? 'none' : 'block';
+      whiteSitBtn.dataset.color = 'white';
+
+      // Add sit button handlers
+      const domain = window.location.host;
+      [blackSitBtn, whiteSitBtn].forEach(btn => {
+        btn.onclick = () => {
+          const input = btn.previousElementSibling;
+          input.value = domain;
+          btn.style.display = 'none';
+        };
+      });
+    }
+
+    // board.addEventListener('orientation', (event) => {
+    //   updatePlayerBoxes(event.orientation);
+    // });
+
+    updatePlayerBoxes(COLOR.white);
   } catch (err) {
     console.log({ err })
     $item.html(message(err.message))
@@ -288,8 +404,8 @@ async function determineFormat(item) {
     return 'FIGURINE' // Matches any of ♔♕♖♗♘♙♚♛♜♝♞♟
   } else if ((item.text.match(/\//g) || []).length === 7) {
     return 'FEN' // FEN notation has exactly 7 slashes
-  } else if (/\[([^\]]*)\]/g.test(item.text)) {
-    return 'PGN'
+  } else if (/\[([^\]]*)\]/g.test(item.text) || /^1\./.test(item.text.trim())) {
+    return 'PGN' // Has square brackets OR starts with "1."
   } else {
     return 'UNKNOWN'
   }
@@ -362,7 +478,79 @@ function figurineToFEN(positionText) {
     .join('/')
 
   // Add default FEN parameters
-  return `${fen} w KQkq - 0 1`
+  return `${fen} w KQkq - 0 1` // just to make it valid, add a default turn and castling rights
+}
+
+function decodePGN(pgnText) {
+  // Initialize default values
+  const gameData = {
+    event: '',
+    site: '',
+    date: '',
+    round: '',
+    white: '',
+    black: '',
+    result: '',
+    moves: '',
+  };
+
+  // Extract tags using regex
+  const tagPattern = /\[([^\s]+)\s+"([^"]*)"\]/g;
+  let tagMatch;
+
+  while ((tagMatch = tagPattern.exec(pgnText)) !== null) {
+    const [_, tagName, tagValue] = tagMatch;
+
+    // Handle common tags specially
+    switch (tagName.toLowerCase()) {
+      case 'event':
+        gameData.event = tagValue;
+        break;
+      case 'site':
+        gameData.site = tagValue;
+        break;
+      case 'date':
+        gameData.date = tagValue;
+        break;
+      case 'round':
+        gameData.round = tagValue;
+        break;
+      case 'white':
+        gameData.white = tagValue;
+        break;
+      case 'black':
+        gameData.black = tagValue;
+        break;
+      case 'result':
+        gameData.result = tagValue;
+        break;
+      default:
+        // Store other tags in the gameData object
+        gameData[tagName] = tagValue;
+    }
+  }
+
+  // Determine game type based on player names
+  const isWhiteBot = gameData.white?.includes('BOT');
+  const isBlackBot = gameData.black?.includes('BOT');
+
+  gameData.gameType = isWhiteBot && isBlackBot ? GAME_TYPE.BOT_BOT :
+    isWhiteBot || isBlackBot ? GAME_TYPE.HUMAN_BOT :
+      GAME_TYPE.HUMAN_HUMAN;
+
+  // Extract moves - everything after the last bracket
+  let movesText = pgnText
+    .replace(tagPattern, '')  // Remove all tags
+    .replace(/\{[^}]*\}/g, '') // Remove comments
+    .replace(/\([^)]*\)/g, '') // Remove variations/parentheses
+    // .replace(/\d+\.\s*/g, '')  // Remove move numbers
+    .replace(/\s+/g, ' ')      // Normalize whitespace
+    .trim();
+
+  movesText = movesText.replace(/\s*(1-0|0-1|1\/2-1\/2|\*)\s*$/, '').trim();
+  gameData.moves = movesText;
+
+  return gameData;
 }
 
 function chessListener(event) {
