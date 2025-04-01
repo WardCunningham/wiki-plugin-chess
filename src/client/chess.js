@@ -108,254 +108,207 @@ async function bind($item, item) {
     }
 
     const tableTime = Date.now()
-    $item.find('.table').html(`
-      <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
-        <div class="chess-container" style="border: 1px solid #333; ">
-          <button id="flip-${tableTime}" class="btn btn-sm" style="position: absolute; top: 10px; right: 10px;">
-            Flip Board
-          </button>
-          <div id="player-top-${tableTime}" class="player-info" style="width: 400px; margin: 10px 0;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span class="piece-icon" style="font-size: 24px;"></span>
-              <div style="flex-grow: 1; display: flex; gap: 10px;">
-                <input type="text" class="form-control player-name" data-color=""
-                  oninput="this.nextElementSibling.style.display = this.value ? 'none' : 'block'">
-                <button class="btn btn-sm sit-button" style="display: none;">Sit</button>
-              </div>
-            </div>
-          </div>
-          <div id="board-${tableTime}" class="board board-large nosort" style="width: 400px"></div>
-          <div id="player-bottom-${tableTime}" class="player-info" style="width: 400px; margin: 10px 0;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span class="piece-icon" style="font-size: 24px;"></span>
-              <div style="flex-grow: 1; display: flex; gap: 10px;">
-                <input type="text" class="form-control player-name" data-color=""
-                  oninput="this.nextElementSibling.style.display = this.value ? 'none' : 'block'">
-                <button class="btn btn-sm sit-button" style="display: none;">Sit</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <p id="gameStatus"></p>
-        ${gameInfo ? `
-          <details class="pgn-details" style="width: 80%; margin: 10px 0;">
-            <summary style="cursor: pointer; padding: 5px; background: #f5f5f5; border: 1px solid #ddd;">
-              Game Information
-            </summary>
-            <div style="padding: 10px; border: 1px solid #ddd; border-top: none;">
-              <div class="pgn-tags" style="display: grid; grid-template-columns: auto 1fr; gap: 5px; align-items: center;">
-                ${Object.entries(gameInfo)
-          .filter(([key]) => key !== 'moves')
-          .map(([key, value]) => `
-                    <label for="${key}-${tableTime}">${key}:</label>
-                    <input id="${key}-${tableTime}" type="text" value="${value}" class="form-control">
-                  `).join('')}
-              </div>
-            </div>
-          </details>
-        ` : ''}
-        <button id="download-${tableTime}" class="btn btn-sm" style="margin-top: 10px;">
-          Download ${mode === 'GAME' ? 'PGN' : 'FEN'}
-        </button>
-      </div>
-    `)
-    document.getElementById(`download-${tableTime}`).addEventListener('click', () => {
-      const content = mode === 'GAME' ? chess.pgn() : chess.fen()
-      const filename = mode === 'GAME' ? 'game.pgn' : 'position.fen'
-      download(filename, content)
-    })
-    const board = new Chessboard(document.getElementById(`board-${tableTime}`), {
-      position: chess.fen(),
-      assetsUrl: '/plugins/chess/assets/',
-      responsive: true, // resize the board automatically to the size of the context element
-      style: { borderType: BORDER_TYPE.none, pieces: { file: 'pieces/staunty.svg' }, animationDuration: 300 },
-      orientation: chess.turn() === 'w' ? COLOR.white : COLOR.black,
-      extensions: [
-        { class: Markers, props: { autoMarkers: MARKER_TYPE.square } },
-        { class: PromotionDialog },
-        { class: Accessibility, props: { visuallyHidden: true } },
-      ],
-    })
-    board.setPosition(position, false)
+    $item.find('.table').html(`<iframe id="board-${tableTime}" style="height:500px;width:100%;" src="//${location.host}/plugins/chess/dialog/index.html"></iframe>`)
 
-    document.getElementById(`flip-${tableTime}`).addEventListener('click', () => {
-      const newOrientation = board.getOrientation() === COLOR.white ? COLOR.black : COLOR.white;
-      board.setOrientation(newOrientation);
-      updatePlayerBoxes(newOrientation);
-    });
+    // document.getElementById(`download-${tableTime}`).addEventListener('click', () => {
+    //   const content = mode === 'GAME' ? chess.pgn() : chess.fen()
+    //   const filename = mode === 'GAME' ? 'game.pgn' : 'position.fen'
+    //   download(filename, content)
+    // })
+    // const board = new Chessboard(document.getElementById(`board-${tableTime}`), {
+    //   position: chess.fen(),
+    //   assetsUrl: '/plugins/chess/assets/',
+    //   responsive: true, // resize the board automatically to the size of the context element
+    //   style: { borderType: BORDER_TYPE.none, pieces: { file: 'pieces/staunty.svg' }, animationDuration: 300 },
+    //   orientation: chess.turn() === 'w' ? COLOR.white : COLOR.black,
+    //   extensions: [
+    //     { class: Markers, props: { autoMarkers: MARKER_TYPE.square } },
+    //     { class: PromotionDialog },
+    //     { class: Accessibility, props: { visuallyHidden: true } },
+    //   ],
+    // })
+    // board.setPosition(position, false)
 
-    updateGameStatus()
-
-    if (mode === 'POSITION') {
-      board.disableMoveInput()
-    } else if (mode === 'GAME') {
-      console.log(`enabling movement for ${chess.turn()}`)
-      board.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
-    }
-
-    function inputHandler(event) {
-      if (event.type === INPUT_EVENT_TYPE.movingOverSquare) {
-        return // ignore this event
-      }
-
-      if (event.type !== INPUT_EVENT_TYPE.moveInputFinished) {
-        event.chessboard.removeLegalMovesMarkers()
-      }
-
-      if (event.type === INPUT_EVENT_TYPE.moveInputStarted) {
-        // mark legal moves
-        const moves = chess.moves({ square: event.squareFrom, verbose: true })
-        event.chessboard.addLegalMovesMarkers(moves)
-        return moves.length > 0
-      } else if (event.type === INPUT_EVENT_TYPE.validateMoveInput) {
-        const move = { from: event.squareFrom, to: event.squareTo, promotion: event.promotion }
-        try {
-          const result = chess.move(move)
-          event.chessboard.state.moveInputProcess.then(() => {
-            // wait for the move input process has finished
-            event.chessboard.setPosition(chess.fen(), true).then(() => {
-              // update position, maybe castled and wait for animation has finished
-              if (gameInfo.gameType !== GAME_TYPE.HUMAN_HUMAN) {
-                makeEngineMove(event.chessboard)
-              } else {
-                console.log(`enabling movement for ${chess.turn()}`)
-                event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
-              }
-            })
-          })
-          return result
-        } catch {
-          // promotion?
-          let possibleMoves = chess.moves({ square: event.squareFrom, verbose: true })
-          for (const possibleMove of possibleMoves) {
-            if (possibleMove.promotion && possibleMove.to === event.squareTo) {
-              event.chessboard.showPromotionDialog(event.squareTo, COLOR.white, result => {
-                if (result.type === PROMOTION_DIALOG_RESULT_TYPE.pieceSelected) {
-                  chess.move({ from: event.squareFrom, to: event.squareTo, promotion: result.piece.charAt(1) })
-                  event.chessboard.setPosition(chess.fen(), true)
-                  if (gameInfo.gameType !== GAME_TYPE.HUMAN_HUMAN) {
-                    makeEngineMove(event.chessboard)
-                  } else {
-                    console.log(`enabling movement for ${chess.turn()}`)
-                    event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
-                  }
-                } else {
-                  // promotion canceled
-                  console.log(`enabling movement for ${chess.turn()}`)
-                  event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
-                  event.chessboard.setPosition(chess.fen(), true)
-                }
-              })
-              return true
-            }
-          }
-        }
-      } else if (event.type === INPUT_EVENT_TYPE.moveInputFinished) {
-        if (event.legalMove) {
-          event.chessboard.disableMoveInput()
-          return true
-        }
-      }
-    }
-
-    function makeEngineMove(chessboard) {
-      // change this to make more random
-      let seed = 71
-      let random = function () {
-        const x = Math.sin(seed++) * 10000
-        return x - Math.floor(x)
-        // return Math.random()
-      }
-
-      const possibleMoves = chess.moves({ verbose: true })
-      if (possibleMoves.length > 0) {
-        const randomIndex = Math.floor(random() * possibleMoves.length)
-        const randomMove = possibleMoves[randomIndex]
-        setTimeout(() => {
-          // smoother with 500ms delay
-          chess.move({ from: randomMove.from, to: randomMove.to })
-          chessboard.setPosition(chess.fen(), true)
-          console.log(`enabling movement for ${chess.turn()}`)
-          chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
-        }, 500)
-      }
-      updateGameStatus()
-    }
-
-    function updateGameStatus() {
-      let statusHTML = ''
-
-      if (chess.isCheckmate() && chess.turn() === 'w') {
-        statusHTML = 'Game over: white is in checkmate. Black wins!'
-      } else if (chess.isCheckmate() && chess.turn() === 'b') {
-        statusHTML = 'Game over: black is in checkmate. White wins!'
-      } else if (chess.isStalemate() && chess.turn() === 'w') {
-        statusHTML = 'Game is drawn. White is stalemated.'
-      } else if (chess.isStalemate() && chess.turn() === 'b') {
-        statusHTML = 'Game is drawn. Black is stalemated.'
-      } else if (chess.isThreefoldRepetition()) {
-        statusHTML = 'Game is drawn by threefold repetition rule.'
-      } else if (chess.isInsufficientMaterial()) {
-        statusHTML = 'Game is drawn by insufficient material.'
-      } else if (chess.isDraw()) {
-        statusHTML = 'Game is drawn by fifty-move rule.'
-      } else {
-        statusHTML = 'Game is ongoing.'
-      }
-
-      document.getElementById('gameStatus').innerHTML = statusHTML
-      if (chess.isGameOver()) console.log(chess.pgn())
-    }
-
-    function updatePlayerBoxes(orientation) {
-      const topBox = document.getElementById(`player-top-${tableTime}`);
-      const bottomBox = document.getElementById(`player-bottom-${tableTime}`);
-
-      const blackBox = orientation === COLOR.white ? topBox : bottomBox;
-      const whiteBox = orientation === COLOR.white ? bottomBox : topBox;
-
-      // Update black player box
-      blackBox.className = 'player-info black-player';
-      blackBox.querySelector('.piece-icon').textContent = PLAYER_ICONS.black;
-      const blackInput = blackBox.querySelector('.player-name');
-      blackInput.value = gameInfo?.black || '';
-      blackInput.dataset.color = 'black';
-      const blackSitBtn = blackBox.querySelector('.sit-button');
-      blackSitBtn.style.display = blackInput.value ? 'none' : 'block';
-      blackSitBtn.dataset.color = 'black';
-
-      // Update white player box
-      whiteBox.className = 'player-info white-player';
-      whiteBox.querySelector('.piece-icon').textContent = PLAYER_ICONS.white;
-      const whiteInput = whiteBox.querySelector('.player-name');
-      whiteInput.value = gameInfo?.white || '';
-      whiteInput.dataset.color = 'white';
-      const whiteSitBtn = whiteBox.querySelector('.sit-button');
-      whiteSitBtn.style.display = whiteInput.value ? 'none' : 'block';
-      whiteSitBtn.dataset.color = 'white';
-
-      // Add sit button handlers
-      const domain = window.location.host;
-      [blackSitBtn, whiteSitBtn].forEach(btn => {
-        btn.onclick = () => {
-          const input = btn.previousElementSibling;
-          input.value = domain;
-          btn.style.display = 'none';
-        };
-      });
-    }
-
-    // board.addEventListener('orientation', (event) => {
-    //   updatePlayerBoxes(event.orientation);
+    // document.getElementById(`flip-${tableTime}`).addEventListener('click', () => {
+    //   const newOrientation = board.getOrientation() === COLOR.white ? COLOR.black : COLOR.white;
+    //   board.setOrientation(newOrientation);
+    //   updatePlayerBoxes(newOrientation);
     // });
 
-    updatePlayerBoxes(COLOR.white);
+    // updateGameStatus()
+
+    // if (mode === 'POSITION') {
+    //   board.disableMoveInput()
+    // } else if (mode === 'GAME') {
+    //   console.log(`enabling movement for ${chess.turn()}`)
+    //   board.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
+    // }
+
+    // function inputHandler(event) {
+    //   if (event.type === INPUT_EVENT_TYPE.movingOverSquare) {
+    //     return // ignore this event
+    //   }
+
+    //   if (event.type !== INPUT_EVENT_TYPE.moveInputFinished) {
+    //     event.chessboard.removeLegalMovesMarkers()
+    //   }
+
+    //   if (event.type === INPUT_EVENT_TYPE.moveInputStarted) {
+    //     // mark legal moves
+    //     const moves = chess.moves({ square: event.squareFrom, verbose: true })
+    //     event.chessboard.addLegalMovesMarkers(moves)
+    //     return moves.length > 0
+    //   } else if (event.type === INPUT_EVENT_TYPE.validateMoveInput) {
+    //     const move = { from: event.squareFrom, to: event.squareTo, promotion: event.promotion }
+    //     try {
+    //       const result = chess.move(move)
+    //       event.chessboard.state.moveInputProcess.then(() => {
+    //         // wait for the move input process has finished
+    //         event.chessboard.setPosition(chess.fen(), true).then(() => {
+    //           // update position, maybe castled and wait for animation has finished
+    //           if (gameInfo.gameType !== GAME_TYPE.HUMAN_HUMAN) {
+    //             makeEngineMove(event.chessboard)
+    //           } else {
+    //             console.log(`enabling movement for ${chess.turn()}`)
+    //             event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
+    //           }
+    //         })
+    //       })
+    //       return result
+    //     } catch {
+    //       // promotion?
+    //       let possibleMoves = chess.moves({ square: event.squareFrom, verbose: true })
+    //       for (const possibleMove of possibleMoves) {
+    //         if (possibleMove.promotion && possibleMove.to === event.squareTo) {
+    //           event.chessboard.showPromotionDialog(event.squareTo, COLOR.white, result => {
+    //             if (result.type === PROMOTION_DIALOG_RESULT_TYPE.pieceSelected) {
+    //               chess.move({ from: event.squareFrom, to: event.squareTo, promotion: result.piece.charAt(1) })
+    //               event.chessboard.setPosition(chess.fen(), true)
+    //               if (gameInfo.gameType !== GAME_TYPE.HUMAN_HUMAN) {
+    //                 makeEngineMove(event.chessboard)
+    //               } else {
+    //                 console.log(`enabling movement for ${chess.turn()}`)
+    //                 event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
+    //               }
+    //             } else {
+    //               // promotion canceled
+    //               console.log(`enabling movement for ${chess.turn()}`)
+    //               event.chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
+    //               event.chessboard.setPosition(chess.fen(), true)
+    //             }
+    //           })
+    //           return true
+    //         }
+    //       }
+    //     }
+    //   } else if (event.type === INPUT_EVENT_TYPE.moveInputFinished) {
+    //     if (event.legalMove) {
+    //       event.chessboard.disableMoveInput()
+    //       return true
+    //     }
+    //   }
+    // }
+
+    // function makeEngineMove(chessboard) {
+    //   // change this to make more random
+    //   let seed = 71
+    //   let random = function () {
+    //     const x = Math.sin(seed++) * 10000
+    //     return x - Math.floor(x)
+    //     // return Math.random()
+    //   }
+
+    //   const possibleMoves = chess.moves({ verbose: true })
+    //   if (possibleMoves.length > 0) {
+    //     const randomIndex = Math.floor(random() * possibleMoves.length)
+    //     const randomMove = possibleMoves[randomIndex]
+    //     setTimeout(() => {
+    //       // smoother with 500ms delay
+    //       chess.move({ from: randomMove.from, to: randomMove.to })
+    //       chessboard.setPosition(chess.fen(), true)
+    //       console.log(`enabling movement for ${chess.turn()}`)
+    //       chessboard.enableMoveInput(inputHandler, chess.turn() === 'w' ? COLOR.white : COLOR.black)
+    //     }, 500)
+    //   }
+    //   updateGameStatus()
+    // }
+
+    // function updateGameStatus() {
+    //   let statusHTML = ''
+
+    //   if (chess.isCheckmate() && chess.turn() === 'w') {
+    //     statusHTML = 'Game over: white is in checkmate. Black wins!'
+    //   } else if (chess.isCheckmate() && chess.turn() === 'b') {
+    //     statusHTML = 'Game over: black is in checkmate. White wins!'
+    //   } else if (chess.isStalemate() && chess.turn() === 'w') {
+    //     statusHTML = 'Game is drawn. White is stalemated.'
+    //   } else if (chess.isStalemate() && chess.turn() === 'b') {
+    //     statusHTML = 'Game is drawn. Black is stalemated.'
+    //   } else if (chess.isThreefoldRepetition()) {
+    //     statusHTML = 'Game is drawn by threefold repetition rule.'
+    //   } else if (chess.isInsufficientMaterial()) {
+    //     statusHTML = 'Game is drawn by insufficient material.'
+    //   } else if (chess.isDraw()) {
+    //     statusHTML = 'Game is drawn by fifty-move rule.'
+    //   } else {
+    //     statusHTML = chess.turn() === 'w' ? "White's move." : "Black's move."
+    //   }
+
+    //   document.getElementById('gameStatus').innerHTML = statusHTML
+    //   if (chess.isGameOver()) console.log(chess.pgn())
+    // }
+
+    // function updatePlayerBoxes(orientation) {
+    //   const topBox = document.getElementById(`player-top-${tableTime}`);
+    //   const bottomBox = document.getElementById(`player-bottom-${tableTime}`);
+
+    //   const blackBox = orientation === COLOR.white ? topBox : bottomBox;
+    //   const whiteBox = orientation === COLOR.white ? bottomBox : topBox;
+
+    //   // Update black player box
+    //   blackBox.className = 'player-info black-player';
+    //   blackBox.querySelector('.piece-icon').textContent = PLAYER_ICONS.black;
+    //   const blackInput = blackBox.querySelector('.player-name');
+    //   blackInput.value = gameInfo?.black || '';
+    //   blackInput.dataset.color = 'black';
+    //   const blackSitBtn = blackBox.querySelector('.sit-button');
+    //   blackSitBtn.style.display = blackInput.value ? 'none' : 'block';
+    //   blackSitBtn.dataset.color = 'black';
+
+    //   // Update white player box
+    //   whiteBox.className = 'player-info white-player';
+    //   whiteBox.querySelector('.piece-icon').textContent = PLAYER_ICONS.white;
+    //   const whiteInput = whiteBox.querySelector('.player-name');
+    //   whiteInput.value = gameInfo?.white || '';
+    //   whiteInput.dataset.color = 'white';
+    //   const whiteSitBtn = whiteBox.querySelector('.sit-button');
+    //   whiteSitBtn.style.display = whiteInput.value ? 'none' : 'block';
+    //   whiteSitBtn.dataset.color = 'white';
+
+    //   // Add sit button handlers
+    //   const domain = window.location.host;
+    //   [blackSitBtn, whiteSitBtn].forEach(btn => {
+    //     btn.onclick = () => {
+    //       const input = btn.previousElementSibling;
+    //       input.value = domain;
+    //       btn.style.display = 'none';
+    //     };
+    //   });
+    // }
+
+    // // board.addEventListener('orientation', (event) => {
+    // //   updatePlayerBoxes(event.orientation);
+    // // });
+
+    // updatePlayerBoxes(COLOR.white);
   } catch (err) {
     console.log({ err })
     $item.html(message(err.message))
   }
-  $item.on('dblclick', () => {
-    return wiki.textEditor($item, item)
+  $item.on('dblclick', (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    // return wiki.textEditor($item, item)
   })
 
   $item.on('click', event => {

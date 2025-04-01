@@ -1,0 +1,33 @@
+{
+  "name": "chess-console-stockfish",
+  "version": "6.3.0",
+  "description": "StockfishPlayer for ChessConsole",
+  "type": "module",
+  "main": "src/chess-console-stockfish/StockfishPlayer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shaack/chess-console-stockfish.git"
+  },
+  "keywords": [
+    "chess",
+    "es6",
+    "engine",
+    "stockfish"
+  ],
+  "author": "Stefan Haack (https://shaack.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shaack/chess-console-stockfish/issues"
+  },
+  "homepage": "https://github.com/shaack/chess-console-stockfish#readme",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.5.1",
+    "bootstrap": "^5.3.3",
+    "chess-console": "^6.12.0",
+    "cm-engine-runner": "^1.2.1",
+    "cm-web-modules": "^2.4.4"
+  }
+}

@@ -1,6 +1,6 @@
 {
   "name": "wiki-plugin-chess",
-  "version": "1.1.2-pre~.0",
+  "version": "1.1.2-pre.4",
   "description": "Federated Wiki - Chess Plugin",
   "type": "module",
   "keywords": [
@@ -24,7 +24,15 @@
   },
   "dependencies": {
     "cm-chessboard": "^8.7.7",
-    "chess.js": "^1.1.0"
+    "chess.js": "^1.1.0",
+    "chess-console": "^6.12.0",
+    "cm-engine-runner": "^1.2.1",
+    "cm-polyglot": "^1.0.3",
+    "cm-web-modules": "^1.6.0",
+    "chess.mjs": "^1.0.0",
+    "cm-pgn": "^3.3.3",
+    "cm-chess": "^3.3.0",
+    "bootstrap-show-modal": "^5.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
