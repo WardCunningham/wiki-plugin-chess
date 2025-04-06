@@ -2,16 +2,18 @@
 <html lang="en">
 
 <head>
-    <title>Federated Wiki Chess</title>
+    <title>Stockfish for chess-console</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <!-- <link rel="icon" type="image/x-icon" href="./favicon.ico"> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
     <link rel="stylesheet" href="./assets/styles/screen.css" />
 </head>
 
 <body>
     <div class="container-fluid">
+        <h1>Stockfish4 for <a href="https://github.com/shaack/chess-console">chess-console</a></h1>
         <div id="console-container" class="mb-3">
             <div class="row chess-console">
                 <div class="chess-console-center col-xl-7 order-xl-2 col-lg-8 order-lg-1 order-md-1 col-md-12">
@@ -44,8 +46,23 @@
                     value="ppppkppp/pppppppp/pppppppp/pppppppp/8/8/8/RNBQKBNR w KQ - 0 1" />
             </div>
         </form>
+        <h3>Repositories and further information on GitHub</h3>
+        <dl>
+            <dt>the Stockfish player for chess-console</dt>
+            <dd><a href="https://github.com/shaack/chess-console-stockfish">chess-console-stockfish</a></dd>
+            <dt>The framework for playing chess in a website</dt>
+            <dd><a href="https://github.com/shaack/chess-console">chess-console</a></dd>
+            <dt>the SVG rendered board used in chess-console</dt>
+            <dd><a href="https://github.com/shaack/cm-chessboard">cm-chessboard</a></dd>
+            <dt>The Stockfish player used online at chessmail</dt>
+            <dd><a href="https://www.chessmail.eu/pages/chess-computer.html">chessmail.eu</a>
+            <dt>The chess computer engine in JavaScript (External)</dt>
+            <dd><a href="https://github.com/nmrugg/stockfish.js">stockfish-niklasf-v10.js</a>
+            </dd>
+        </dl>
         <p>
-            chess-console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE">MIT</a>.
+            copyright &copy; <a href="https://shaack.com">shaack.com</a> engineering.<br />
+            Source code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE">MIT</a>.
             License for the Sounds: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. License of the
             SVG
             pieces <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>.
@@ -56,43 +73,23 @@
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.2/dist/es-module-shims.min.js"></script>
-    <!-- @formatter:off -->
-    <script type="importmap">
-    {
-        "imports": {
-            "chess-console/": "./node_modules/chess-console/",
-            "cm-engine-runner/": "./node_modules/cm-engine-runner/",
-            "cm-polyglot/": "./node_modules/cm-polyglot/",
-            "cm-chessboard/": "./node_modules/cm-chessboard/",
-            "cm-web-modules/": "./node_modules/cm-web-modules/",
-            "chess.mjs/": "./node_modules/chess.mjs/",
-            "cm-pgn/": "./node_modules/cm-pgn/",
-            "cm-chess/": "./node_modules/cm-chess/",
-            "bootstrap-show-modal/": "./node_modules/bootstrap-show-modal/"
-        }
-    }
-</script>
-    <!-- @formatter:on -->
     <script type="module">
 
-        import { PromotionDialog } from "cm-chessboard/src/extensions/promotion-dialog/PromotionDialog.js"
-        import { BORDER_TYPE } from "cm-chessboard/src/Chessboard.js"
-        import { ChessConsole } from "chess-console/src/ChessConsole.js"
-        import { LocalPlayer } from "chess-console/src/players/LocalPlayer.js"
-        import { RandomPlayer } from "chess-console/src/players/RandomPlayer.js"
-        import { Board, CONSOLE_MARKER_TYPE } from "chess-console/src/components/Board.js"
-        import { GameStateOutput } from "chess-console/src/components/GameStateOutput.js"
-        import { History } from "chess-console/src/components/History.js"
-        import { CapturedPieces } from "chess-console/src/components/CapturedPieces.js"
-        import { HistoryControl } from "chess-console/src/components/HistoryControl.js"
-        import { GameControl } from "chess-console/src/components/GameControl/GameControl.js"
-        import { Persistence } from "chess-console/src/components/Persistence.js"
-        import { Sound } from "chess-console/src/components/Sound.js"
+        import { ChessConsole } from "./chess-console-stockfish.js"
+        import { LocalPlayer } from "./chess-console-stockfish.js"
+        import { Board } from "./chess-console-stockfish.js"
+        import { GameStateOutput } from "./chess-console-stockfish.js"
+        import { History } from "./chess-console-stockfish.js"
+        import { CapturedPieces } from "./chess-console-stockfish.js"
+        import { HistoryControl } from "./chess-console-stockfish.js"
+        import { Persistence } from "./chess-console-stockfish.js"
+        import { Sound } from "./chess-console-stockfish.js"
 
-        import { StockfishGameControl } from "./src/StockfishGameControl.js"
-        import { StockfishPlayer } from "./src/StockfishPlayer.js"
-        import { StockfishStateView } from "./src/StockfishStateView.js"
-        import { I18n } from "cm-web-modules/src/i18n/I18n.js"
+        import { StockfishGameControl } from "./chess-console-stockfish.js"
+        import { StockfishPlayer } from "./chess-console-stockfish.js"
+        import { StockfishStateView } from "./chess-console-stockfish.js"
+        import { StockfishNewGameDialog } from "./chess-console-stockfish.js"
+        import { I18n } from "./chess-console-stockfish.js"
 
         const i18n = new I18n()
         i18n.load({
@@ -103,33 +100,42 @@
                 playerName: "Player"
             }
         })
+        const pgn = `
+          [SetUp "1"]
+          [FEN "4k2r/1P4P1/8/8/8/8/1p1N4/4K3 w - - 0 1"]
+          `
         const chessConsole = new ChessConsole(
             document.getElementById("console-container"),
             { name: i18n.t("playerName"), type: LocalPlayer },
             {
                 name: "Stockfish", type: StockfishPlayer, props: {
-                    worker: "./node_modules/cm-engine-runner/engines/stockfish-v10-niklasf.js",
+                    worker: "./stockfish-niklasf-v10.js",
                     book: "./assets/books/openings.bin",
                     level: 1,
                     debug: true
                 }
             })
         new Board(chessConsole, {
-            assetsUrl: "./node_modules/cm-chessboard/assets/",
+            assetsUrl: "./assets/",
             style: {
                 cssClass: "green",
-                borderType: BORDER_TYPE.frame,
+                borderType: 'frame',
                 showCoordinates: true,
                 pieces: { file: "pieces/staunty.svg" }
-            },
+            }
         }).initialized.then(() => {
             new Persistence(chessConsole, {
                 savePrefix: "Stockfish"
             }).load()
+            chessConsole.initGame({
+                playerColor: "w",
+                pgn: pgn
+            })
         })
         new History(chessConsole)
         new HistoryControl(chessConsole)
         new CapturedPieces(chessConsole)
+        console.log(`opp:`, chessConsole.opponent)
         new StockfishGameControl(chessConsole, {
             player: chessConsole.opponent
         })
