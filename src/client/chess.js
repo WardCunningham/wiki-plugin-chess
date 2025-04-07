@@ -7,7 +7,7 @@ const expand = text => {
 }
 
 const emit = ($item, item) => {
-  return $item.append(`<iframe id="board" style="height:500px;width:100%;" src="//${location.host}/plugins/chess/index.html"></iframe>`)
+  return $item.append(`<iframe id="board" style="height:600px;width:100%;" src="//${location.host}/plugins/chess/index.html"></iframe>`)
 }
 
 const bind = ($item, item) => {
