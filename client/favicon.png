@@ -1,0 +1,22 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:green;" />
+      <stop offset="100%" style="stop-color:teal;" />
+    </linearGradient>
+  </defs>
+
+  <rect width="100" height="100" fill="url(#bgGradient)" />
+
+  <text
+    x="50%"
+    y="60%"
+    font-size="80"
+    fill="white"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="Arial, sans-serif"
+  >
+    ♟
+  </text>
+</svg>

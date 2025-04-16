@@ -6,7 +6,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  <link id='favicon' href='//favicon.png' rel='icon' type='image/png'>
+  <link id='favicon' href='./favicon.png' rel='icon' type='image/png'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
   <link rel="stylesheet" href="./assets/styles/screen.css" />
 </head>
@@ -35,20 +35,21 @@
         </div>
       </div>
     </div>
+    <button id="sendMsg" class="btn btn-outline-primary mb-4" type="button">Send Msg</button>
     <form>
       <div class="input-group mb-4">
         <label for="fenInput" class="sr-only">FEN</label>
         <div class="input-group-prepend">
           <button id="fenButton" class="btn btn-outline-primary" type="button">Init with FEN</button>
         </div>
-        <input id="fenInput" class="form-control" placeholder="FEN"
-          value="ppppkppp/pppppppp/pppppppp/pppppppp/8/8/8/RNBQKBNR w KQ - 0 1" />
+        <input id="fenInput" class="form-control" placeholder="FEN" value="4k2r/1P4P1/8/8/8/8/1p1N4/4K3 w - - 0 1" />
       </div>
     </form>
-    <base target="_blank" />
-    Chess-Console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE">MIT</a>. <br />
-    License for the Sounds: <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. <br />
-    License of the SVG pieces <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>.
+    Chess-Console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE"
+      target="_blank">MIT</a>. <br />
+    License for the Sounds: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>. <br />
+    License of the SVG pieces <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC BY-SA
+      3.0</a>.
     </p>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -58,35 +59,19 @@
   <script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.2/dist/es-module-shims.min.js"></script>
 
   <script type="module">
-    import { ChessConsole } from "./chess-console-stockfish.js"
-    import { LocalPlayer } from "./chess-console-stockfish.js"
-    import { Board } from "./chess-console-stockfish.js"
-    import { GameStateOutput } from "./chess-console-stockfish.js"
-    import { History } from "./chess-console-stockfish.js"
-    import { CapturedPieces } from "./chess-console-stockfish.js"
-    import { HistoryControl } from "./chess-console-stockfish.js"
-    import { Persistence } from "./chess-console-stockfish.js"
-    import { Sound } from "./chess-console-stockfish.js"
-    import { StockfishGameControl } from "./chess-console-stockfish.js"
-    import { StockfishPlayer } from "./chess-console-stockfish.js"
-    import { StockfishStateView } from "./chess-console-stockfish.js"
-    import { StockfishNewGameDialog } from "./chess-console-stockfish.js"
-    import { I18n } from "./chess-console-stockfish.js"
+    import {
+      ChessConsole, LocalPlayer, Board, GameStateOutput,
+      History, CapturedPieces, HistoryControl, Persistence,
+      Sound, StockfishGameControl, StockfishPlayer,
+      StockfishStateView, StockfishNewGameDialog, I18n
+    } from "./chess-console-stockfish.js"
 
     const i18n = new I18n()
     i18n.load({
-      de: {
-        playerName: "Spieler"
-      },
-      en: {
-        playerName: "Player"
-      }
+      de: { playerName: "Spieler" },
+      en: { playerName: "Player" }
     })
-    // **** CODE FOR TESTING PAWN PROMOTION ****
-    // const pgn = `
-    //       [SetUp "1"]
-    //       [FEN "4k2r/1P4P1/8/8/8/8/1p1N4/4K3 w - - 0 1"]
-    //       `
+
     const chessConsole = new ChessConsole(
       document.getElementById("console-container"),
       { name: i18n.t("playerName"), type: LocalPlayer },
@@ -110,11 +95,6 @@
       new Persistence(chessConsole, {
         savePrefix: "Stockfish"
       }).load()
-      // **** CODE FOR TESTING PAWN PROMOTION ****
-      // chessConsole.initGame({
-      //   playerColor: "w",
-      //   pgn: pgn
-      // })
     })
     new History(chessConsole)
     new HistoryControl(chessConsole)
@@ -124,16 +104,42 @@
     new GameStateOutput(chessConsole)
     new Sound(chessConsole, { soundSpriteFile: "./assets/sounds/chess_console_sounds.mp3" })
 
+    // Change board position to fen
     document.getElementById("fenButton").addEventListener("click", () => {
       const fen = document.getElementById("fenInput").value
       const pgn = `
         [SetUp "1"]
         [FEN "${fen}"]`
-      chessConsole.initGame({
-        pgn: pgn
-      })
+      chessConsole.initGame({ pgn: pgn })
     })
 
+    // Send messages to wiki
+    document.getElementById("sendMsg").addEventListener("click", () => {
+      if (window.opener && (window.opener !== window.parent)) {
+        console.log("this is a child window")
+        window.opener.postMessage({
+          type: "chess-console",
+          source: "child window",
+          action: "test"
+        })
+      } else if (window.parent !== window.self) {
+        console.log("this is an iframe")
+        window.parent.postMessage({
+          type: "chess-console",
+          source: "iframe",
+          action: "test"
+        })
+      } else {
+        // This is where the chess app is accessed directly, maybe as a PWA too.
+        console.log("this is a top level window")
+      }
+    })
+
+    // Receive messages from wiki
+    window.addEventListener("message", event => {
+      const data = event.data
+      console.log(`message from ${data.source}:`, data)
+    })
   </script>
 </body>
 
