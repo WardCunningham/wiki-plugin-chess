@@ -1,5 +1,6 @@
 const assetsToCache = [
   "/",
+  "index.html",
   "style.css",
   "wiki.js",
   "glitch-pwa.js",
