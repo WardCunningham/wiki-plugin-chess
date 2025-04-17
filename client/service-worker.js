@@ -11,7 +11,20 @@ const assetsToCache = [
   "all.min.css",
   "bootstrap.bundle.min.js",
   "es-module-shims.min.js",
-  "jquery-3.3.1.slim.min.js"
+  "jquery-3.3.1.slim.min.js",
+  "./assets/styles/screen.css",
+  "./assets/books/openings.bin",
+  "./assets/sounds/chess_console_sounds.mp3",
+  "./assets/pieces/staunty.svg",
+  "./assets/extensions/markers/markers.svg",
+  "./webfonts/fa-solid-900.woff2",
+  "./webfonts/fa-solid-900.woff",
+  "./webfonts/fa-solid-900.ttf",
+  "manifest.json",
+  "icon-120.png",
+  "icon-180.png",
+  "icon-192.png",
+  "icon-512.png"
 ]
 
 // what to cache for offline use
