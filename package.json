@@ -34,10 +34,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Bortseb/wiki-plugin-chess.git"
+    "url": "git+https://github.com/WardCunningham/wiki-plugin-chess.git"
   },
   "bugs": {
-    "url": "https://github.com/Bortseb/wiki-plugin-chess/issues"
+    "url": "https://github.com/WardCunningham/wiki-plugin-chess/issues"
   },
   "engines": {
     "node": ">=20.x"

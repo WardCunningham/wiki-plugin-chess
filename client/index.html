@@ -6,11 +6,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  <!-- <link id='favicon' href='./favicon.svg' rel='icon' type='image/png'> -->
-  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" /> -->
-  <link rel="stylesheet" href="./all.min.css" />
+  <link rel="stylesheet" href="./assets/styles/all.min.css" />
   <link rel="stylesheet" href="./assets/styles/screen.css" />
-  <link href="./style.css" rel="stylesheet">
   <link rel="icon" href="icon-120.png" />
   <link rel="manifest" href="manifest.json" />
 </head>
@@ -58,20 +55,10 @@
   </div>
 
   <!-- SCRIPTS -->
-  <script type="module" src="./wiki.js"></script>
   <script type="module" src="./glitch-pwa.js"></script>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script> -->
-  <script src="./bootstrap.bundle.min.js"></script>
-
-  <!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-  integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-  crossorigin="anonymous"></script> -->
-  <script src="./jquery-3.3.1.slim.min.js"
-    integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-    crossorigin="anonymous"></script>
-  <!-- <script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.2/dist/es-module-shims.min.js"></script> -->
-  <script src="./es-module-shims.min.js"></script>
-
+  <script src="./assets/scripts/bootstrap.bundle.min.js"></script>
+  <script src="./assets/scripts/jquery-3.3.1.slim.min.js"></script>
+  <script src="./assets/scripts/es-module-shims.min.js"></script>
 
   <script type="module">
     import {
@@ -79,7 +66,7 @@
       History, CapturedPieces, HistoryControl, Persistence,
       Sound, StockfishGameControl, StockfishPlayer,
       StockfishStateView, StockfishNewGameDialog, I18n
-    } from "./chess-console-stockfish.js"
+    } from "./cm-modules-bundle.js"
 
     const i18n = new I18n()
     i18n.load({
@@ -93,7 +80,7 @@
       { name: i18n.t("playerName"), type: LocalPlayer },
       {
         name: "Stockfish", type: StockfishPlayer, props: {
-          worker: "./stockfish-niklasf-v10.js",
+          worker: "./assets/scripts/stockfish-niklasf-v10.js",
           book: "./assets/books/openings.bin",
           level: 1,
           debug: true

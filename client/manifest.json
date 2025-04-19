@@ -1,7 +1,7 @@
 {
-  "name": "Wiki Chess PWA",
-  "short_name": "Wiki Chess PWA",
-  "description": "A wiki chess folks can install on their phones",
+  "name": "Wiki Chess",
+  "short_name": "Wiki Chess",
+  "description": "Wiki Chess as a Progressive Web App (PWA)",
   "display": "standalone",
   "icons": [
     {
