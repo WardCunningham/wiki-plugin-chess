@@ -56,9 +56,9 @@
 
   <!-- SCRIPTS -->
   <script type="module" src="./glitch-pwa.js"></script>
-  <script src="./assets/scripts/bootstrap.bundle.min.js"></script>
-  <script src="./assets/scripts/jquery-3.3.1.slim.min.js"></script>
-  <script src="./assets/scripts/es-module-shims.min.js"></script>
+  <script src="./assets/js/bootstrap.bundle.min.js"></script>
+  <script src="./assets/js/jquery-3.3.1.slim.min.js"></script>
+  <script src="./assets/js/es-module-shims.min.js"></script>
 
   <script type="module">
     import {
@@ -80,7 +80,7 @@
       { name: i18n.t("playerName"), type: LocalPlayer },
       {
         name: "Stockfish", type: StockfishPlayer, props: {
-          worker: "./assets/scripts/stockfish-niklasf-v10.js",
+          worker: "./assets/js/stockfish-niklasf-v10.js",
           book: "./assets/books/openings.bin",
           level: 1,
           debug: true
