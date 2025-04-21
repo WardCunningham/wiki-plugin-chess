@@ -140,8 +140,23 @@
 
     // Receive messages from wiki
     window.addEventListener("message", event => {
-      const data = event.data
-      console.log(`message from ${data.source}:`, data)
+      const { action, chessObj } = event.data
+      switch (action) {
+        case "load":
+          console.log({ chessObj })
+          if (chessObj.PGN) {
+            chessConsole.initGame({ pgn: chessObj.PGN }) // Updated to use PGN property
+          } else if (chessObj.FEN) {
+            console.log("Need to load fen editor instead of chess-console")
+          } else {
+            console.log("Not sure how to handle this yet")
+          }
+          break
+        default:
+          console.log("unknown message type:", action)
+          console.log({ chessObj })
+          break
+      }
     })
   </script>
 </body>

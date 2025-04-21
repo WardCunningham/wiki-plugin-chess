@@ -18,12 +18,17 @@
 <body>
   <main>
     <div class="container-fluid max-width-xxl">
-      <h1>cm-fen-editor, a chess position editor</h1>
+      <h4>cm-fen-editor, a chess position editor</h4>
       <div class="cm-fen-editor">
         <div class="form-group row mb-3 g-3">
           <label for="fenInputOutput" class="col-auto col-form-label d-none d-md-block">FEN</label>
           <div class="col">
-            <input type="text" class="form-control fen-input-output" id="fenInputOutput">
+            <div class="input-group">
+              <input type="text" class="form-control fen-input-output" id="fenInputOutput">
+              <button class="btn btn-outline-secondary" type="button" id="copyFenBtn" title="Copy FEN">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
           </div>
           <div class="col-auto">
             <label for="positionSetUp" class="visually-hidden">Position setups</label>
@@ -81,6 +86,16 @@
                 </div>
               </div>
             </div>
+            <div class="form-floating mb-3">
+              <select class="form-select use-action" id="useAction">
+                <option selected disabled value="">…</option>
+                <option value="engine">Start Engine Game</option>
+                <option disabled value="personalInvitation">Create personal invitation</option>
+                <option disabled value="openInvitation">Create open invitation</option>
+                <option disabled value="puzzle">Create chess problem in forum</option>
+              </select>
+              <label class="label" for="useAction">Use position</label>
+            </div>
             <p class="text-muted">Click on an empty square to create a piece. Move a piece out of the board
               to remove it.</p>
           </div>
@@ -99,7 +114,6 @@
   <script src="./assets/js/es-module-shims.min.js"></script>
 
   <script type="module">
-
     import { FenEditor, MARKER_TYPE } from "./cm-modules-bundle.js"
 
     new FenEditor(document.querySelector(".cm-fen-editor"), {
@@ -108,16 +122,30 @@
       piecesFile: "pieces/staunty.svg",
       markers: MARKER_TYPE.square,
       onFenChange: function (event) {
-        console.log("onFenChange", event)
+        // console.log("onFenChange", event)
       },
       onPositionChange: function (event) {
-        console.log("onPositionChange", event)
+        // console.log("onPositionChange", event)
       }
     })
+
+    // Copy to clipboard functionality
+    document.getElementById('copyFenBtn').addEventListener('click', async () => {
+      const fenInput = document.getElementById('fenInputOutput');
+      try {
+        await navigator.clipboard.writeText(fenInput.value);
+        // Visual feedback
+        const btn = document.getElementById('copyFenBtn');
+        const icon = btn.querySelector('i');
+        icon.classList.replace('fa-copy', 'fa-check');
+        setTimeout(() => {
+          icon.classList.replace('fa-check', 'fa-copy');
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    });
   </script>
 </body>
 
 </html>
-
-<!-- TODO, bring in feneditor code into bundle I make -->
-<!-- TODO looks like MARKER_TYPE also needs exported if possible -->

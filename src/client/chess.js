@@ -1,44 +1,62 @@
-let popup, mode = 'GAME' // A global variable to keep track of the mode of the chess plugin, GAME is assumed by default.
+let iframe, chessObj = {} // An object to hold the chess item's state and other important metadata
 
-const emit = ($item, item) => {
-  return $item.append(`
-    <iframe id="board" style="height:600px;width:100%;" src="//${location.host}/plugins/chess/index.html"></iframe>
-    <button id="openNew" type="button" onclick="window.plugins.chess.dopopup(event)">Open in new window</button>
-    <button id="sendMsg" type="button" onclick="window.plugins.chess.sendmessage(event)">Send Message</button>
-    `)
-}
+const emit = async ($item, item) => {
+  chessObj.item = item
+  console.log(`chessObj.item`, chessObj.item)
+  chessObj.mode = await checkMode(item) // The mode of the chess item (GAME, POSITION, PUZZLE, NONE)
+  console.log(`chessObj.mode`, chessObj.mode)
+  // If a mode is given in the item text, remove it to get the chess state, which is either FEN or PGN format
+  if (chessObj.mode !== 'NONE') chessObj.chessState = item.text.replace(/^\w+\s+/, '')
+  else chessObj.chessState = item.text // If no mode is given, use the entire text as the chess state
+  console.log(`chessObj.chessState`, chessObj.chessState)
+  chessObj.format = await getFormat(chessObj.chessState)
+  console.log(`chessObj.format`, chessObj.format)
 
-const bind = async ($item, item) => {
-
-  let format = await determineFormat(item)
-  let position
-
-  switch (format) {
+  switch (chessObj.format) {
     case 'FIGURINE':
-      position = figurineToFEN(item.text)
-      mode = 'POSITION'
+      chessObj.FEN = figurineToFEN(item.text)
       break
     case 'FEN':
-      position = item.text
-      mode = 'POSITION'
+      chessObj.FEN = item.text
       break
     case 'PGN':
       try {
-        mode = 'GAME'
+        chessObj.PGN = item.text
+        console.log('Loading PGN:', chessObj.PGN)
       } catch (error) {
         console.error('Error loading PGN:', error)
         trouble('Invalid PGN notation', item.text)
-        mode = 'POSITION'
       }
       break
     case 'UNKNOWN':
       console.log('Unknown format, loading a new game')
-      mode = 'GAME'
       break
   }
 
+  const html = chessObj.FEN ? 'fen-editor.html' : 'index.html'
+
+  iframe = $('<iframe>', {
+    id: 'board',
+    style: 'height:600px;width:100%;border-width:0px;',
+    src: `//${location.host}/plugins/chess/${html}`
+  });
+
+  return $item.append(
+    $('<div>', {
+      style: 'background-color:#eee;border-width:2px;border-color:black;border-style:solid'
+    }).append([
+      iframe,
+      `<button id="openNew" type="button" onclick="window.plugins.chess.doPopup(event)">Open in new window</button>
+      <button id="sendMsg" type="button" onclick="window.plugins.chess.sendMessage('load')">Send Message</button>
+      <button id="saveChanges" type="button" onclick="window.plugins.chess.saveChanges(event)">Save Changes</button>
+      <p>isOwner?: ${isOwner}</p>
+      <p>isAuthenticated?: ${isAuthenticated}</p>`
+    ])
+  );
+}
+
+const bind = async ($item, item) => {
   $item.on('click', event => {
-    console.log("Clicked on item!")
     const { target } = event
     // const { action } = (target.closest("a") || {}).dataset
     // if (!action) {
@@ -67,6 +85,10 @@ const bind = async ($item, item) => {
     // }
   })
 
+  return $item.dblclick(() => {
+    return wiki.textEditor($item, item)
+  })
+
   function download(filename, text) {
     var element = document.createElement('a')
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
@@ -76,19 +98,11 @@ const bind = async ($item, item) => {
     element.click()
     document.body.removeChild(element)
   }
-
-  return $item.dblclick(() => {
-    return wiki.textEditor($item, item)
-  })
 }
 
-function trouble(text, detail) {
-  // console.log(text,detail)
-  throw new Error(text + '\n' + detail)
-}
-
-// open chess plugin in new window
-const dopopup = event => {
+// open chess plugin in new  popup window
+let popup
+const doPopup = event => {
   const doing = { type: 'batch' }
   popup = window.open('/plugins/chess/index.html', 'chess', 'popup,height=720,width=1280')
   if (popup.location.pathname != '/plugins/chess/') {
@@ -104,19 +118,30 @@ const dopopup = event => {
   }
 }
 
-// Send message to popup window
-const sendmessage = event => {
-  if (popup) {
-    const msg = { type: 'message to popup' }
-    popup.postMessage(msg, window.origin)
-  }
-  else {
-    console.log('No popup window found.')
+// Send message to popup window or iframe
+const sendMessage = (action) => {
+  console.log({ popup, iframe })
+  const msg = { action, chessObj }
+  try {
+    if (popup) {
+      popup.postMessage(msg, window.origin)
+    }
+    if (iframe) {
+      iframe[0].contentWindow.postMessage(msg, window.origin)
+    }
+  } catch (error) {
+    console.error('Error sending message:', error)
+    trouble('Error sending message', error)
   }
 }
 
+// Save changes to item.text
+const saveChanges = event => {
+
+}
+
 if (typeof window !== 'undefined') {
-  window.plugins.chess = { emit, bind, dopopup, sendmessage }
+  window.plugins.chess = { emit, bind, doPopup, sendMessage, saveChanges }
   if (typeof window.chessListener !== 'undefined' || window.chessListener == null) {
     console.log('**** Adding chess listener')
     window.chessListener = chessListener
@@ -125,12 +150,25 @@ if (typeof window !== 'undefined') {
 }
 
 // Determines format of chess item text
-async function determineFormat(item) {
-  if (/[\u2654-\u265F]/.test(item.text)) {
+async function checkMode(item) {
+  if (item.text.trim().split(/\s+/)[0].toUpperCase() === 'GAME') { // Check if the first word is 'GAME'
+    return 'GAME'
+  } else if (item.text.trim().split(/\s+/)[0].toUpperCase() === 'POSITION') { // Check if the first word is 'EDIT'
+    return 'POSITION'
+  } else if (item.text.trim().split(/\s+/)[0].toUpperCase() === 'PUZZLE') { // Check if the first word is 'EDIT'
+    return 'PUZZLE'
+  } else {
+    return 'NONE'
+  }
+}
+
+// Determines format of chess item text
+async function getFormat(text) {
+  if (/[\u2654-\u265F]/.test(text)) {
     return 'FIGURINE' // Matches any of ♔♕♖♗♘♙♚♛♜♝♞♟
-  } else if ((item.text.match(/\//g) || []).length === 7) {
+  } else if ((text.match(/\//g) || []).length === 7) {
     return 'FEN' // FEN notation has exactly 7 slashes
-  } else if (/\[([^\]]*)\]/g.test(item.text) || /^1\./.test(item.text.trim())) {
+  } else if (/\[([^\]]*)\]/g.test(text) || /^1\./.test(text.trim())) {
     return 'PGN' // Has square brackets OR starts with "1."
   } else {
     return 'UNKNOWN'
@@ -200,6 +238,11 @@ function figurineToFEN(positionText) {
 
   // Add default FEN parameters
   return `${fen} w KQkq - 0 1` // just to make it valid, add a default turn and castling rights
+}
+
+function trouble(text, detail) {
+  // console.log(text,detail)
+  throw new Error(text + '\n' + detail)
 }
 
 // Listener for messages from the chess popup window or iframe
