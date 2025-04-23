@@ -46,8 +46,7 @@
         <input id="fenInput" class="form-control" placeholder="FEN" value="4k2r/1P4P1/8/8/8/8/1p1N4/4K3 w - - 0 1" />
       </div>
     </form>
-    Chess-Console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE"
-      target="_blank">MIT</a>. <br />
+    Chess-Console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE" target="_blank">MIT</a>. <br />
     License for the Sounds: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>. <br />
     License of the SVG pieces <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC BY-SA
       3.0</a>.
@@ -65,7 +64,7 @@
       ChessConsole, LocalPlayer, Board, GameStateOutput,
       History, CapturedPieces, HistoryControl, Persistence,
       Sound, StockfishGameControl, StockfishPlayer,
-      StockfishStateView, StockfishNewGameDialog, I18n
+      StockfishStateView, StockfishNewGameDialog, I18n, FEN
     } from "./cm-modules-bundle.js"
 
     const i18n = new I18n()
@@ -86,8 +85,13 @@
           debug: true
         }
       })
+
+    // Determine where to send messages
+    const msgTarget = window.opener || window.parent !== window.self ? window.parent : null;
+
     new Board(chessConsole, {
       assetsUrl: "./assets/",
+      position: FEN.empty,
       style: {
         cssClass: "green",
         borderType: 'frame',
@@ -98,6 +102,8 @@
       new Persistence(chessConsole, {
         savePrefix: "Stockfish"
       }).load()
+      console.log("TADA!@!!DSSKDJ")
+      msgTarget.postMessage({ action: "get state" }, window.origin)
     })
     new History(chessConsole)
     new HistoryControl(chessConsole)
@@ -118,23 +124,16 @@
 
     // Send messages to wiki
     document.getElementById("sendMsg").addEventListener("click", () => {
-      if (window.opener && (window.opener !== window.parent)) {
-        console.log("this is a child window")
-        window.opener.postMessage({
-          type: "chess-console",
-          source: "child window",
-          action: "test"
-        })
-      } else if (window.parent !== window.self) {
-        console.log("this is an iframe")
-        window.parent.postMessage({
-          type: "chess-console",
-          source: "iframe",
-          action: "test"
-        })
+      if (msgTarget) {
+        // const chessObj = {
+        //   PGN: chessConsole.getPGN(),
+        //   FEN: chessConsole.getFEN()
+        // }
+        msgTarget.postMessage({ action: "load", chessObj: { body: "test" } }, "*")
+        console.log("sending message to wiki", { action: "load", chessObj: { body: "test" } })
       } else {
         // This is where the chess app is accessed directly, maybe as a PWA too.
-        console.log("this is a top level window")
+        console.log("this is a top level window, nothing to send messages to")
       }
     })
 
@@ -151,6 +150,10 @@
           } else {
             console.log("Not sure how to handle this yet")
           }
+          break
+        case "send state":
+          console.log("I got the state!", chessObj)
+          chessConsole.initGame({ pgn: chessObj.PGN }) // Updated to use PGN property
           break
         default:
           console.log("unknown message type:", action)

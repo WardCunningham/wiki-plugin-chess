@@ -2,15 +2,23 @@ let iframe, chessObj = {} // An object to hold the chess item's state and other 
 
 const emit = async ($item, item) => {
   chessObj.item = item
-  console.log(`chessObj.item`, chessObj.item)
   chessObj.mode = await checkMode(item) // The mode of the chess item (GAME, POSITION, PUZZLE, NONE)
-  console.log(`chessObj.mode`, chessObj.mode)
   // If a mode is given in the item text, remove it to get the chess state, which is either FEN or PGN format
-  if (chessObj.mode !== 'NONE') chessObj.chessState = item.text.replace(/^\w+\s+/, '')
-  else chessObj.chessState = item.text // If no mode is given, use the entire text as the chess state
-  console.log(`chessObj.chessState`, chessObj.chessState)
+  if (chessObj.mode !== 'NONE') {
+    if (item.text.trim().toUpperCase() === chessObj.mode) {
+      chessObj.chessState = ''
+    } else {
+      // Otherwise remove the mode word and any following whitespace
+      chessObj.chessState = item.text.replace(/^[\w]+[\s]+/, '')
+    }
+  } else {
+    chessObj.chessState = item.text // If no mode is given, use the entire text as the chess state
+  }
   chessObj.format = await getFormat(chessObj.chessState)
-  console.log(`chessObj.format`, chessObj.format)
+
+  const defaultPGN = `
+    [SetUp "1"]
+    [FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]` // Default starting position
 
   switch (chessObj.format) {
     case 'FIGURINE':
@@ -22,23 +30,32 @@ const emit = async ($item, item) => {
     case 'PGN':
       try {
         chessObj.PGN = item.text
-        console.log('Loading PGN:', chessObj.PGN)
       } catch (error) {
-        console.error('Error loading PGN:', error)
-        trouble('Invalid PGN notation', item.text)
+        trouble('Invalid PGN notation', error)
+      }
+      break
+    case 'EMPTY':
+      if (chessObj.mode === 'GAME') {
+        console.log('Empty text, loading a new game')
+        chessObj.PGN = defaultPGN
+      } else if (chessObj.mode === 'POSITION') {
+        console.log('Empty text, loading a new position')
+        chessObj.FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' // Default starting position
       }
       break
     case 'UNKNOWN':
       console.log('Unknown format, loading a new game')
+      chessObj.PGN = defaultPGN
       break
   }
 
   const html = chessObj.FEN ? 'fen-editor.html' : 'index.html'
+  const fenParam = chessObj.FEN ? `?fen=${encodeURIComponent(chessObj.FEN)}` : ''
 
   iframe = $('<iframe>', {
     id: 'board',
     style: 'height:600px;width:100%;border-width:0px;',
-    src: `//${location.host}/plugins/chess/${html}`
+    src: `//${location.host}/plugins/chess/${html}${fenParam}`
   });
 
   return $item.append(
@@ -48,7 +65,7 @@ const emit = async ($item, item) => {
       iframe,
       `<button id="openNew" type="button" onclick="window.plugins.chess.doPopup(event)">Open in new window</button>
       <button id="sendMsg" type="button" onclick="window.plugins.chess.sendMessage('load')">Send Message</button>
-      <button id="saveChanges" type="button" onclick="window.plugins.chess.saveChanges(event)">Save Changes</button>
+      <button id="saveChanges" type="button">Save Changes</button>
       <p>isOwner?: ${isOwner}</p>
       <p>isAuthenticated?: ${isAuthenticated}</p>`
     ])
@@ -85,9 +102,7 @@ const bind = async ($item, item) => {
     // }
   })
 
-  return $item.dblclick(() => {
-    return wiki.textEditor($item, item)
-  })
+  $item.on('dblclick', () => wiki.textEditor($item, item))
 
   function download(filename, text) {
     var element = document.createElement('a')
@@ -98,13 +113,28 @@ const bind = async ($item, item) => {
     element.click()
     document.body.removeChild(element)
   }
+
+  $item.find('#saveChanges').on('click', e => {
+    console.log('saveChanges - event', { e })
+    console.log("Show item before trying to save", { item })
+    // TODO - replace the following with whatever the latest PGN is, might need composed, especially if tags are changing
+    // item.text += "surprise!"
+    wiki.pageHandler.put($item.parents('.page:first'), {
+      type: 'edit',
+      id: item.id,
+      item: item,
+    })
+  })
+
 }
 
 // open chess plugin in new  popup window
 let popup
 const doPopup = event => {
+  const html = chessObj.FEN ? 'fen-editor.html' : 'index.html'
+  const fenParam = chessObj.FEN ? `?fen=${encodeURIComponent(chessObj.FEN)}` : ''
   const doing = { type: 'batch' }
-  popup = window.open('/plugins/chess/index.html', 'chess', 'popup,height=720,width=1280')
+  popup = window.open(`/plugins/chess/${html}${fenParam}`, 'chess', 'popup,height=720,width=1280')
   if (popup.location.pathname != '/plugins/chess/') {
     console.log('launching new dialog')
     popup.addEventListener('load', event => {
@@ -118,30 +148,38 @@ const doPopup = event => {
   }
 }
 
+const msgTarget = window.opener || window.parent !== window.self ? window.parent : null;
+
+// document.getElementById("sendMsg").addEventListener("click", () => {
+//   if (msgTarget) {
+//     // const chessObj = {
+//     //   PGN: chessConsole.getPGN(),
+//     //   FEN: chessConsole.getFEN()
+//     // }
+//     msgTarget.postMessage({ action: "load", chessObj: { body: "test" } }, "*")
+//     console.log("sending message to wiki", { action: "load", chessObj: { body: "test" } })
+//   } else {
+//     // This is where the chess app is accessed directly, maybe as a PWA too.
+//     console.log("this is a top level window, nothing to send messages to")
+//   }
+// })
+
 // Send message to popup window or iframe
 const sendMessage = (action) => {
   console.log({ popup, iframe })
   const msg = { action, chessObj }
   try {
-    if (popup) {
-      popup.postMessage(msg, window.origin)
-    }
-    if (iframe) {
-      iframe[0].contentWindow.postMessage(msg, window.origin)
-    }
+    if (popup) popup.postMessage(msg, window.origin)
+    if (iframe) iframe[0].contentWindow.postMessage(msg, window.origin)
   } catch (error) {
     console.error('Error sending message:', error)
     trouble('Error sending message', error)
   }
 }
 
-// Save changes to item.text
-const saveChanges = event => {
-
-}
 
 if (typeof window !== 'undefined') {
-  window.plugins.chess = { emit, bind, doPopup, sendMessage, saveChanges }
+  window.plugins.chess = { emit, bind, doPopup, sendMessage }
   if (typeof window.chessListener !== 'undefined' || window.chessListener == null) {
     console.log('**** Adding chess listener')
     window.chessListener = chessListener
@@ -170,6 +208,8 @@ async function getFormat(text) {
     return 'FEN' // FEN notation has exactly 7 slashes
   } else if (/\[([^\]]*)\]/g.test(text) || /^1\./.test(text.trim())) {
     return 'PGN' // Has square brackets OR starts with "1."
+  } else if (text.length === 0) {
+    return 'EMPTY'
   } else {
     return 'UNKNOWN'
   }
@@ -240,6 +280,7 @@ function figurineToFEN(positionText) {
   return `${fen} w KQkq - 0 1` // just to make it valid, add a default turn and castling rights
 }
 
+
 function trouble(text, detail) {
   // console.log(text,detail)
   throw new Error(text + '\n' + detail)
@@ -272,6 +313,10 @@ function chessListener(event) {
     case 'test':
       console.log("The test message worked!");
       break
+    case 'get state':
+      sendMessage("send state")
+      // TODO - load the chess item
+      break
     default:
       console.error({ where: 'chessListener', message: 'unknown action', data })
   }
@@ -287,9 +332,7 @@ const expand = text => {
 
 export const chess = typeof window == 'undefined' ? { expand } : undefined
 
-// TODO - try and get this to a point where a game can be played on wiki
-// MODES for the chess plugin: 1. game 2. position 3. puzzle 
-// TODO fix favicon to match origin
-// TODO enabled switching between modes
-// Make the plugin also work offline as installable PWA
-// Convert any position into a GAME or PUZZLE
+// TODO - add a way to save the chess item (See markdown) https://github.com/fedwiki/wiki-plugin-markdown/blob/main/src/markdown.js#L96
+// https://github.com/fedwiki/wiki-plugin-markdown/blob/ebe71c3b8c67d4752bc01d0bdf428e5a52379045/src/markdown.js#L96
+// TODO determine who the players are, and who's turn it is. Right now assuming stockfish opponent.
+// TODO enable converting any position into a GAME or PUZZLE
