@@ -14,24 +14,46 @@ const emit = async ($item, item) => {
   } else {
     chessObj.chessState = item.text // If no mode is given, use the entire text as the chess state
   }
-  chessObj.format = await getFormat(chessObj.chessState)
 
   const defaultPGN = `
-    [SetUp "1"]
-    [FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]` // Default starting position
+  [SetUp "1"]
+  [FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]` // Default starting position
 
+  chessObj.format = await getFormat(chessObj.chessState)
   switch (chessObj.format) {
     case 'FIGURINE':
       chessObj.FEN = figurineToFEN(item.text)
+      if (chessObj.mode === 'GAME') {
+        console.log('Loading Game from FEN position')
+        // TODO - generate PGN from FEN
+        chessObj.PGN = defaultPGN
+      } else if (chessObj.mode === 'POSITION') {
+        console.log('FEN should already be in loaded')
+      }
       break
     case 'FEN':
       chessObj.FEN = item.text
+      if (chessObj.mode === 'GAME') {
+        console.log('Loading Game from FEN position')
+        // TODO - generate PGN from FEN
+        chessObj.PGN = defaultPGN
+      } else if (chessObj.mode === 'POSITION') {
+        console.log('FEN should already be in loaded')
+      }
       break
     case 'PGN':
-      try {
-        chessObj.PGN = item.text
-      } catch (error) {
-        trouble('Invalid PGN notation', error)
+      if (chessObj.mode === 'GAME') {
+        try {
+          chessObj.PGN = item.text
+        } catch (error) {
+          trouble('Invalid PGN notation', error)
+        }
+      } else if (chessObj.mode === 'POSITION') {
+        chessObj.PGN = defaultPGN
+      } else if (chessObj.mode === 'PUZZLE') {
+        chessObj.PGN = defaultPGN
+      } else if (chessObj.mode === 'NONE') {
+        chessObj.PGN = defaultPGN
       }
       break
     case 'EMPTY':
@@ -44,13 +66,28 @@ const emit = async ($item, item) => {
       }
       break
     case 'UNKNOWN':
-      console.log('Unknown format, loading a new game')
-      chessObj.PGN = defaultPGN
+      if (chessObj.mode === 'GAME') {
+        console.log('Unknown format, loading a new game')
+        chessObj.PGN = defaultPGN
+      } else if (chessObj.mode === 'POSITION') {
+        console.log('Unknown format, loading a new position')
+        chessObj.FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' // Default starting position
+      }
       break
   }
-
-  const html = chessObj.FEN ? 'fen-editor.html' : 'index.html'
-  const fenParam = chessObj.FEN ? `?fen=${encodeURIComponent(chessObj.FEN)}` : ''
+  console.log({ chessObj })
+  // TODO - check if the chessObj is valid, and if not, set it to a default state
+  let html, fenParam
+  if (chessObj.mode === 'GAME' || chessObj.PGN) {
+    console.log('Loading game mode')
+    // TODO - handle GAME mode
+    html = 'game.html'
+    fenParam = ''
+  } else {
+    console.log('Loading fen editor')
+    html = 'fen-editor.html'
+    fenParam = `?fen=${encodeURIComponent(chessObj.FEN)}`
+  }
 
   iframe = $('<iframe>', {
     id: 'board',
@@ -131,42 +168,25 @@ const bind = async ($item, item) => {
 // open chess plugin in new  popup window
 let popup
 const doPopup = event => {
-  const html = chessObj.FEN ? 'fen-editor.html' : 'index.html'
+  const html = chessObj.FEN ? 'fen-editor.html' : 'game.html'
   const fenParam = chessObj.FEN ? `?fen=${encodeURIComponent(chessObj.FEN)}` : ''
-  const doing = { type: 'batch' }
+  const msg = { type: 'batch' }
   popup = window.open(`/plugins/chess/${html}${fenParam}`, 'chess', 'popup,height=720,width=1280')
   if (popup.location.pathname != '/plugins/chess/') {
     console.log('launching new dialog')
     popup.addEventListener('load', event => {
       console.log('launched and loaded')
-      popup.postMessage(doing, window.origin)
+      popup.postMessage(msg, window.origin)
     })
   }
   else {
-    console.log('reusing existing dialog')
-    popup.postMessage(doing, window.origin)
+    console.log('!!!!!!reusing existing dialog')
+    popup.postMessage(msg, window.origin)
   }
 }
 
-const msgTarget = window.opener || window.parent !== window.self ? window.parent : null;
-
-// document.getElementById("sendMsg").addEventListener("click", () => {
-//   if (msgTarget) {
-//     // const chessObj = {
-//     //   PGN: chessConsole.getPGN(),
-//     //   FEN: chessConsole.getFEN()
-//     // }
-//     msgTarget.postMessage({ action: "load", chessObj: { body: "test" } }, "*")
-//     console.log("sending message to wiki", { action: "load", chessObj: { body: "test" } })
-//   } else {
-//     // This is where the chess app is accessed directly, maybe as a PWA too.
-//     console.log("this is a top level window, nothing to send messages to")
-//   }
-// })
-
 // Send message to popup window or iframe
 const sendMessage = (action) => {
-  console.log({ popup, iframe })
   const msg = { action, chessObj }
   try {
     if (popup) popup.postMessage(msg, window.origin)
@@ -177,7 +197,6 @@ const sendMessage = (action) => {
   }
 }
 
-
 if (typeof window !== 'undefined') {
   window.plugins.chess = { emit, bind, doPopup, sendMessage }
   if (typeof window.chessListener !== 'undefined' || window.chessListener == null) {
@@ -187,13 +206,13 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Determines format of chess item text
+// Determines mode from chess item text
 async function checkMode(item) {
   if (item.text.trim().split(/\s+/)[0].toUpperCase() === 'GAME') { // Check if the first word is 'GAME'
     return 'GAME'
   } else if (item.text.trim().split(/\s+/)[0].toUpperCase() === 'POSITION') { // Check if the first word is 'EDIT'
     return 'POSITION'
-  } else if (item.text.trim().split(/\s+/)[0].toUpperCase() === 'PUZZLE') { // Check if the first word is 'EDIT'
+  } else if (item.text.trim().split(/\s+/)[0].toUpperCase() === 'PUZZLE') { // Check if the first word is 'PUZZLE'
     return 'PUZZLE'
   } else {
     return 'NONE'
@@ -280,9 +299,7 @@ function figurineToFEN(positionText) {
   return `${fen} w KQkq - 0 1` // just to make it valid, add a default turn and castling rights
 }
 
-
 function trouble(text, detail) {
-  // console.log(text,detail)
   throw new Error(text + '\n' + detail)
 }
 
@@ -292,7 +309,7 @@ function chessListener(event) {
   // only continue if event is from a chess popup.
   // events from a popup window will have an opener
   // ensure that the popup window is one of ours
-  if (!(event.source.opener || event.source.parent) || event.source.location.pathname !== '/plugins/chess/index.html') {
+  if (!(event.source.opener || event.source.parent) || event.source.location.pathname !== '/plugins/chess/game.html') {
     if (wiki.debug) {
       console.log('chessListener - not for us', { event })
     }
@@ -313,8 +330,8 @@ function chessListener(event) {
     case 'test':
       console.log("The test message worked!");
       break
-    case 'get state':
-      sendMessage("send state")
+    case 'get-state':
+      sendMessage("send-state")
       // TODO - load the chess item
       break
     default:
@@ -332,7 +349,6 @@ const expand = text => {
 
 export const chess = typeof window == 'undefined' ? { expand } : undefined
 
-// TODO - add a way to save the chess item (See markdown) https://github.com/fedwiki/wiki-plugin-markdown/blob/main/src/markdown.js#L96
-// https://github.com/fedwiki/wiki-plugin-markdown/blob/ebe71c3b8c67d4752bc01d0bdf428e5a52379045/src/markdown.js#L96
-// TODO determine who the players are, and who's turn it is. Right now assuming stockfish opponent.
+// The logic for  switch case around the chessObj.mode is a bit convoluted. try and simplify it.
+// TODO determine who the players are from PGN, and who's turn it is. Right now assuming stockfish opponent.
 // TODO enable converting any position into a GAME or PUZZLE

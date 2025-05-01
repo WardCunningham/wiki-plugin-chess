@@ -1,6 +1,6 @@
 const assetsToCache = [
   "/",
-  "index.html",
+  "game.html",
   "fen-editor.html",
   "glitch-pwa.js",
   "cm-modules-bundle.js",

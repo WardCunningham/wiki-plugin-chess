@@ -64,76 +64,29 @@
       ChessConsole, LocalPlayer, Board, GameStateOutput,
       History, CapturedPieces, HistoryControl, Persistence,
       Sound, StockfishGameControl, StockfishPlayer,
-      StockfishStateView, StockfishNewGameDialog, I18n, FEN
+      StockfishStateView, StockfishNewGameDialog, I18n, FEN, Pgn
     } from "./cm-modules-bundle.js"
 
-    const i18n = new I18n()
-    i18n.load({
-      de: { playerName: "Spieler" },
-      en: { playerName: "Player" },
-      fr: { playerName: "Joueur" }
-    })
+    let chessObj
+    const msgTarget = window.opener || window.parent !== window.self ? window.parent : null; // Determine where to send messages
 
-    const chessConsole = new ChessConsole(
-      document.getElementById("console-container"),
-      { name: i18n.t("playerName"), type: LocalPlayer },
-      {
-        name: "Stockfish", type: StockfishPlayer, props: {
-          worker: "./assets/js/stockfish-niklasf-v10.js",
-          book: "./assets/books/openings.bin",
-          level: 1,
-          debug: true
-        }
-      })
-
-    // Determine where to send messages
-    const msgTarget = window.opener || window.parent !== window.self ? window.parent : null;
-
-    new Board(chessConsole, {
-      assetsUrl: "./assets/",
-      position: FEN.empty,
-      style: {
-        cssClass: "green",
-        borderType: 'frame',
-        showCoordinates: true,
-        pieces: { file: "pieces/staunty.svg" }
-      }
-    }).initialized.then(() => {
-      new Persistence(chessConsole, {
-        savePrefix: "Stockfish"
-      }).load()
-      console.log("TADA!@!!DSSKDJ")
-      msgTarget.postMessage({ action: "get state" }, window.origin)
-    })
-    new History(chessConsole)
-    new HistoryControl(chessConsole)
-    new CapturedPieces(chessConsole)
-    new StockfishGameControl(chessConsole, { player: chessConsole.opponent })
-    new StockfishStateView(chessConsole, chessConsole.opponent)
-    new GameStateOutput(chessConsole)
-    new Sound(chessConsole, { soundSpriteFile: "./assets/sounds/chess_console_sounds.mp3" })
-
-    // Change board position to fen
-    document.getElementById("fenButton").addEventListener("click", () => {
-      const fen = document.getElementById("fenInput").value
-      const pgn = `
-        [SetUp "1"]
-        [FEN "${fen}"]`
-      chessConsole.initGame({ pgn: pgn })
-    })
-
-    // Send messages to wiki
-    document.getElementById("sendMsg").addEventListener("click", () => {
+    window.addEventListener("DOMContentLoaded", () => {
+      // Check if the page is loaded in a wiki
       if (msgTarget) {
-        // const chessObj = {
-        //   PGN: chessConsole.getPGN(),
-        //   FEN: chessConsole.getFEN()
-        // }
-        msgTarget.postMessage({ action: "load", chessObj: { body: "test" } }, "*")
-        console.log("sending message to wiki", { action: "load", chessObj: { body: "test" } })
+        console.log("this is a wiki page")
+        msgTarget.postMessage({ action: "get-state" }, window.origin)
       } else {
-        // This is where the chess app is accessed directly, maybe as a PWA too.
-        console.log("this is a top level window, nothing to send messages to")
+        console.log("this is a top level window, there is no wiki to send messages to!")
+        //  TODO load a default game state here
+        chessObj = {
+          mode: "GAME",
+          format: "PGN",
+          PGN: `
+            [SetUp "1"]
+            [FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]`
+        }
+
+        initializeChess(chessObj); // Initialize chess with the chessObj
       }
     })
 
@@ -151,15 +104,96 @@
             console.log("Not sure how to handle this yet")
           }
           break
-        case "send state":
+        case "send-state":
           console.log("I got the state!", chessObj)
-          chessConsole.initGame({ pgn: chessObj.PGN }) // Updated to use PGN property
+          initializeChess(chessObj)
+          // chessConsole.initGame({ pgn: chessObj.PGN }) // Updated to use PGN property
           break
         default:
           console.log("unknown message type:", action)
           console.log({ chessObj })
           break
       }
+    })
+
+    // Send messages to wiki
+    document.getElementById("sendMsg").addEventListener("click", () => {
+      if (msgTarget) {
+        // const chessObj = {
+        //   PGN: chessConsole.getPGN(),
+        //   FEN: chessConsole.getFEN()
+        // }
+        msgTarget.postMessage({ action: "load", chessObj: { body: "test" } }, "*")
+        console.log("sending message to wiki", { action: "load", chessObj: { body: "test" } })
+      } else {
+        // This is where the chess app is accessed directly, maybe as a PWA too.
+        console.log("this is a top level window, there is no wiki to send messages to")
+      }
+    })
+
+    function initializeChess(chessObj) {
+      const i18n = new I18n()
+      i18n.load({
+        de: { playerName: "Spieler" },
+        en: { playerName: "Player" },
+        fr: { playerName: "Joueur" }
+      })
+
+      const chessConsole = new ChessConsole(
+        document.getElementById("console-container"),
+        // { name: i18n.t("playerName"), type: LocalPlayer },
+        {
+          name: "Stockfish Level 1", type: StockfishPlayer, props: {
+            worker: "./assets/js/stockfish-niklasf-v10.js",
+            book: "./assets/books/openings.bin",
+            level: 1,
+            debug: false
+          }
+        },
+        {
+          name: "Stockfish Level 5", type: StockfishPlayer, props: {
+            worker: "./assets/js/stockfish-niklasf-v10.js",
+            book: "./assets/books/openings.bin",
+            level: 5,
+            debug: false
+          }
+        })
+
+      new Board(chessConsole, {
+        assetsUrl: "./assets/",
+        position: FEN.empty,
+        style: {
+          cssClass: "green",
+          borderType: 'frame',
+          showCoordinates: true,
+          pieces: { file: "pieces/staunty.svg" }
+        }
+      }).initialized.then(() => {
+        new Persistence(chessConsole, {
+          savePrefix: "Stockfish"
+        }).load()
+        const pgny = new Pgn(chessObj.PGN)
+        console.log({ pgny })
+        chessConsole.initGame({ pgn: chessObj.PGN })
+      })
+      new History(chessConsole)
+      new HistoryControl(chessConsole)
+      new CapturedPieces(chessConsole)
+      new StockfishGameControl(chessConsole, { player: chessConsole.opponent })
+      new StockfishStateView(chessConsole, chessConsole.opponent)
+      new GameStateOutput(chessConsole)
+      new Sound(chessConsole, { soundSpriteFile: "./assets/sounds/chess_console_sounds.mp3" })
+
+      console.log("HAHAHAHAH! we're in a function!")
+    }
+
+    // Change board position to fen
+    document.getElementById("fenButton").addEventListener("click", () => {
+      const fen = document.getElementById("fenInput").value
+      const pgn = `
+        [SetUp "1"]
+        [FEN "${fen}"]`
+      chessConsole.initGame({ pgn: pgn })
     })
   </script>
 </body>
