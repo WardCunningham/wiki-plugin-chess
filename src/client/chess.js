@@ -2,97 +2,44 @@ let iframe, chessObj = {} // An object to hold the chess item's state and other 
 
 const emit = async ($item, item) => {
   chessObj.item = item
-  chessObj.mode = await checkMode(item) // The mode of the chess item (GAME, POSITION, PUZZLE, NONE)
-  // If a mode is given in the item text, remove it to get the chess state, which is either FEN or PGN format
-  if (chessObj.mode !== 'NONE') {
-    if (item.text.trim().toUpperCase() === chessObj.mode) {
-      chessObj.chessState = ''
-    } else {
-      // Otherwise remove the mode word and any following whitespace
-      chessObj.chessState = item.text.replace(/^[\w]+[\s]+/, '')
-    }
-  } else {
-    chessObj.chessState = item.text // If no mode is given, use the entire text as the chess state
-  }
-
-  const defaultPGN = `
-  [SetUp "1"]
-  [FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]` // Default starting position
+  let html, params
 
   chessObj.format = await getFormat(chessObj.chessState)
   switch (chessObj.format) {
     case 'FIGURINE':
       chessObj.FEN = figurineToFEN(item.text)
-      if (chessObj.mode === 'GAME') {
-        console.log('Loading Game from FEN position')
-        // TODO - generate PGN from FEN
-        chessObj.PGN = defaultPGN
-      } else if (chessObj.mode === 'POSITION') {
-        console.log('FEN should already be in loaded')
-      }
+      console.log('Loading fen editor')
+      html = 'fen-editor.html'
+      params = `?fen=${encodeURIComponent(chessObj.FEN)}`
       break
     case 'FEN':
       chessObj.FEN = item.text
-      if (chessObj.mode === 'GAME') {
-        console.log('Loading Game from FEN position')
-        // TODO - generate PGN from FEN
-        chessObj.PGN = defaultPGN
-      } else if (chessObj.mode === 'POSITION') {
-        console.log('FEN should already be in loaded')
-      }
+      console.log('Loading fen editor')
+      html = 'fen-editor.html'
+      params = `?fen=${encodeURIComponent(chessObj.FEN)}`
       break
     case 'PGN':
-      if (chessObj.mode === 'GAME') {
-        try {
-          chessObj.PGN = item.text
-        } catch (error) {
-          trouble('Invalid PGN notation', error)
-        }
-      } else if (chessObj.mode === 'POSITION') {
-        chessObj.PGN = defaultPGN
-      } else if (chessObj.mode === 'PUZZLE') {
-        chessObj.PGN = defaultPGN
-      } else if (chessObj.mode === 'NONE') {
-        chessObj.PGN = defaultPGN
-      }
+      console.log('Loading game mode')
+      html = 'game.html'
+      params = ''
       break
-    case 'EMPTY':
-      if (chessObj.mode === 'GAME') {
-        console.log('Empty text, loading a new game')
-        chessObj.PGN = defaultPGN
-      } else if (chessObj.mode === 'POSITION') {
-        console.log('Empty text, loading a new position')
-        chessObj.FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' // Default starting position
-      }
+    case 'PUZZLE':
+      console.log('Loading puzzle mode')
+      html = 'puzzle.html'
+      params = ''
       break
     case 'UNKNOWN':
-      if (chessObj.mode === 'GAME') {
-        console.log('Unknown format, loading a new game')
-        chessObj.PGN = defaultPGN
-      } else if (chessObj.mode === 'POSITION') {
-        console.log('Unknown format, loading a new position')
-        chessObj.FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' // Default starting position
-      }
+      console.log('Loading unknown mode')
+      html = 'unknown.html'
+      params = ''
       break
   }
   console.log({ chessObj })
-  // TODO - check if the chessObj is valid, and if not, set it to a default state
-  let html, fenParam
-  if (chessObj.mode === 'GAME' || chessObj.PGN) {
-    console.log('Loading game mode')
-    // TODO - handle GAME mode
-    html = 'game.html'
-    fenParam = ''
-  } else {
-    console.log('Loading fen editor')
-    html = 'fen-editor.html'
-    fenParam = `?fen=${encodeURIComponent(chessObj.FEN)}`
-  }
 
   iframe = $('<iframe>', {
     id: 'board',
     style: 'height:600px;width:100%;border-width:0px;',
-    src: `//${location.host}/plugins/chess/${html}${fenParam}`
+    src: `//${location.host}/plugins/chess/${html}${params}`
   });
 
   return $item.append(
@@ -227,8 +174,8 @@ async function getFormat(text) {
     return 'FEN' // FEN notation has exactly 7 slashes
   } else if (/\[([^\]]*)\]/g.test(text) || /^1\./.test(text.trim())) {
     return 'PGN' // Has square brackets OR starts with "1."
-  } else if (text.length === 0) {
-    return 'EMPTY'
+    // } else if ()
+    //   return 'PUZZLE' // Matches puzzle notation
   } else {
     return 'UNKNOWN'
   }
