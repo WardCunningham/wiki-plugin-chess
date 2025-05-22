@@ -2,35 +2,31 @@ let iframe, chessObj = {} // An object to hold the chess item's state and other 
 
 const emit = async ($item, item) => {
   chessObj.item = item
-  let html, params
+  chessObj.chessState = item.text
+  let params
 
   chessObj.format = await getFormat(chessObj.chessState)
   switch (chessObj.format) {
     case 'FIGURINE':
-      chessObj.FEN = figurineToFEN(item.text)
+      chessObj.FEN = figurineToFEN(chessObj.chessState)
       console.log('Loading fen editor')
-      html = 'fen-editor.html'
       params = `?fen=${encodeURIComponent(chessObj.FEN)}`
       break
     case 'FEN':
-      chessObj.FEN = item.text
+      chessObj.FEN = chessObj.chessState
       console.log('Loading fen editor')
-      html = 'fen-editor.html'
       params = `?fen=${encodeURIComponent(chessObj.FEN)}`
       break
     case 'PGN':
       console.log('Loading game mode')
-      html = 'game.html'
       params = ''
       break
     case 'PUZZLE':
       console.log('Loading puzzle mode')
-      html = 'puzzle.html'
       params = ''
       break
     case 'UNKNOWN':
       console.log('Loading unknown mode')
-      html = 'unknown.html'
       params = ''
       break
   }
@@ -39,7 +35,7 @@ const emit = async ($item, item) => {
   iframe = $('<iframe>', {
     id: 'board',
     style: 'height:600px;width:100%;border-width:0px;',
-    src: `//${location.host}/plugins/chess/${html}${params}`
+    src: `//${location.host}/plugins/chess/index.html${params}`
   });
 
   return $item.append(
@@ -299,3 +295,4 @@ export const chess = typeof window == 'undefined' ? { expand } : undefined
 // The logic for  switch case around the chessObj.mode is a bit convoluted. try and simplify it.
 // TODO determine who the players are from PGN, and who's turn it is. Right now assuming stockfish opponent.
 // TODO enable converting any position into a GAME or PUZZLE
+// TODO  chageMode becomes a function similar to change page from my recent adfapter experiments
