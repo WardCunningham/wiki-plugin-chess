@@ -18,6 +18,7 @@ const emit = async ($item, item) => {
       params = `?fen=${encodeURIComponent(chessObj.FEN)}`
       break
     case 'PGN':
+      chessObj.PGN = chessObj.chessState
       console.log('Loading game mode')
       params = ''
       break
@@ -111,7 +112,7 @@ const bind = async ($item, item) => {
 // open chess plugin in new  popup window
 let popup
 const doPopup = event => {
-  const html = chessObj.FEN ? 'fen-editor.html' : 'game.html'
+  const html = 'index.html'
   const fenParam = chessObj.FEN ? `?fen=${encodeURIComponent(chessObj.FEN)}` : ''
   const msg = { type: 'batch' }
   popup = window.open(`/plugins/chess/${html}${fenParam}`, 'chess', 'popup,height=720,width=1280')
@@ -252,7 +253,7 @@ function chessListener(event) {
   // only continue if event is from a chess popup.
   // events from a popup window will have an opener
   // ensure that the popup window is one of ours
-  if (!(event.source.opener || event.source.parent) || event.source.location.pathname !== '/plugins/chess/game.html') {
+  if (!(event.source.opener || event.source.parent) || event.source.location.pathname !== '/plugins/chess/index.html') {
     if (wiki.debug) {
       console.log('chessListener - not for us', { event })
     }
@@ -292,7 +293,37 @@ const expand = text => {
 
 export const chess = typeof window == 'undefined' ? { expand } : undefined
 
+// TODO Parse Item text like frame does below 
 // The logic for  switch case around the chessObj.mode is a bit convoluted. try and simplify it.
 // TODO determine who the players are from PGN, and who's turn it is. Right now assuming stockfish opponent.
 // TODO enable converting any position into a GAME or PUZZLE
 // TODO  chageMode becomes a function similar to change page from my recent adfapter experiments
+
+
+function parse(text) {
+  const [line, ...rest] = text.split("\n")
+  let src = validateSrc(line)
+  let height = defaultHeight, matchData
+  const caption = []
+  const sources = new Set()
+  const lineups = new Set()
+  for (let line of rest) {
+    if (matchData = line.match(/^HEIGHT (\w+)/)) {
+      height = +matchData[1]
+      continue
+    } else if (matchData = line.match(/^SOURCE (\w+)/)) {
+      sources.add(matchData[1])
+    } else if (matchData = line.match(/^LINEUP (\w+)/)) {
+      lineups.add(matchData[1])
+    } else {
+      caption.push(line)
+    }
+  }
+  return {
+    ...src,
+    caption: caption.join("\n"),
+    height,
+    sources,
+    lineups
+  }
+}
