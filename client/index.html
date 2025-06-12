@@ -53,8 +53,10 @@
           <input id="fenInput" class="form-control" placeholder="FEN" value="4k2r/1P4P1/8/8/8/8/1p1N4/4K3 w - - 0 1" />
         </div>
       </form>
-      Chess-Console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE" target="_blank">MIT</a>. <br />
-      License for the Sounds: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>. <br />
+      Chess-Console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE"
+        target="_blank">MIT</a>. <br />
+      License for the Sounds: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>.
+      <br />
       License of the SVG pieces <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC BY-SA
         3.0</a>.
       </p>
@@ -107,21 +109,25 @@
                 <div class="row">
                   <div class="col-6 col-md-12 col-lg-6">
                     <div class="">
-                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-wk" id="castle-wk" value="K">
+                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-wk" id="castle-wk"
+                        value="K">
                       <label class="custom-control-label" for="castle-wk">White O-O</label>
                     </div>
                     <div class="">
-                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-wq" id="castle-wq" value="Q">
+                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-wq" id="castle-wq"
+                        value="Q">
                       <label class="custom-control-label" for="castle-wq">White O-O-O</label>
                     </div>
                   </div>
                   <div class="col-6 col-md-12 col-lg-6">
                     <div class="">
-                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-bk" id="castle-bk" value="k">
+                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-bk" id="castle-bk"
+                        value="k">
                       <label class="custom-control-label" for="castle-bk">Black O-O</label>
                     </div>
                     <div class="">
-                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-bq" id="castle-bq" value="q">
+                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-bq" id="castle-bq"
+                        value="q">
                       <label class="custom-control-label" for="castle-bq">Black O-O-O</label>
                     </div>
                   </div>
@@ -138,7 +144,8 @@
               </select>
               <label class="label" for="useAction">Use position</label>
             </div>
-            <p class="text-muted">Click on an empty square to create a piece. Move a piece out of the board to remove it.</p>
+            <p class="text-muted">Click on an empty square to create a piece. Move a piece out of the board to remove
+              it.</p>
           </div>
           <ul class="list-inline">
             <li class="list-inline-item">
@@ -183,10 +190,10 @@
         format: "PGN",
         PGN: `
             [SetUp "1"]
-            [FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]`,
-        parsedPGN: new Pgn(chessObj.PGN)
+            [FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]`
       }
 
+      chessObj.parsedPGN = new Pgn(chessObj.PGN)
       initializeChess(chessObj); // Initialize chess with the chessObj
     }
   })
@@ -196,16 +203,6 @@
     const { action, chessObj } = event.data
     chessObj.parsedPGN = new Pgn(chessObj.PGN)
     switch (action) {
-      // case "load":
-      //   console.log({ chessObj })
-      //   if (chessObj.PGN) {
-      //     chessConsole.initGame({ pgn: chessObj.PGN })
-      //   } else if (chessObj.FEN) {
-      //     console.log("Need to load fen editor instead of chess-console")
-      //   } else {
-      //     console.log("Not sure how to handle this yet")
-      //   }
-      //   break
       case "set-state":
         console.log("I got the state!", chessObj)
         initializeChess(chessObj)
@@ -221,10 +218,6 @@
   // Send messages to wiki
   document.getElementById("sendMsg").addEventListener("click", () => {
     if (msgTarget) {
-      // const chessObj = {
-      //   PGN: chessConsole.getPGN(),
-      //   FEN: chessConsole.getFEN()
-      // }
       msgTarget.postMessage({ action: "load", chessObj: { body: "test" } }, "*")
       console.log("sending message to wiki", { action: "load", chessObj: { body: "test" } })
     } else {
@@ -245,28 +238,17 @@
     if (chessObj.PGN) {
       console.log("Initializing Chess Console with PGN")
       changePage("game") // Show the game page
-      console.log({ PGN })
-      console.log("PGN", PGN.header.tags.White, PGN.header.tags.Black, PGN.header.tags.Result)
       if (typeof chessConsole === "undefined") {
+        console.log("I would like to show players", chessObj.parsedPGN.header.tags.Black, chessObj.parsedPGN.header.tags.White)
+        let { player: whitePlayer, type: whiteType } = configurePlayer(chessObj.parsedPGN.header.tags.White)
+        let { player: blackPlayer, type: blackType } = configurePlayer(chessObj.parsedPGN.header.tags.Black)
+        console.log("White Player:", whitePlayer, "Type:", whiteType)
+        console.log("Black Player:", blackPlayer, "Type:", blackType)
         chessConsole = new ChessConsole(
           document.getElementById("console-container"),
-          // { name: i18n.t("playerName"), type: LocalPlayer },
-          {
-            name: "Stockfish Level 1", type: StockfishPlayer, props: {
-              worker: "./assets/js/stockfish-niklasf-v10.js",
-              book: "./assets/books/openings.bin",
-              level: 1,
-              debug: false
-            }
-          },
-          {
-            name: "Stockfish Level 5", type: StockfishPlayer, props: {
-              worker: "./assets/js/stockfish-niklasf-v10.js",
-              book: "./assets/books/openings.bin",
-              level: 5,
-              debug: false
-            }
-          })
+          whitePlayer,
+          blackPlayer
+        )
 
         new Board(chessConsole, {
           assetsUrl: "./assets/",
@@ -287,8 +269,13 @@
         new History(chessConsole)
         new HistoryControl(chessConsole)
         new CapturedPieces(chessConsole)
-        new StockfishGameControl(chessConsole, { player: chessConsole.opponent })
-        new StockfishStateView(chessConsole, chessConsole.opponent)
+        console.log(`Opponent: `, chessConsole.opponent)
+
+        if (whiteType === "stockfish" || blackType === "stockfish") {
+          new StockfishGameControl(chessConsole, { player: chessConsole.opponent })
+          new StockfishStateView(chessConsole, chessConsole.opponent)
+
+        }
         new GameStateOutput(chessConsole)
         new Sound(chessConsole, { soundSpriteFile: "./assets/sounds/chess_console_sounds.mp3" })
 
@@ -329,7 +316,35 @@
       }
       initializeChess(chessObj); // Initialize chess with the chessObj
     }
+  }
 
+  function configurePlayer(name) {
+    console.log(`Is Stockfish Level: `, name.slice(0, -1).toLowerCase().trim() === "stockfish level")
+    console.log(`level num`, 1 <= name.slice(-1) <= 8)
+    if (name.slice(0, -1).toLowerCase().trim() === "stockfish level" && 1 <= name.slice(-1) <= 8) {
+      return {
+        player: {
+          name: name,
+          type: StockfishPlayer,
+          props: {
+            worker: "./assets/js/stockfish-niklasf-v10.js",
+            book: "./assets/books/openings.bin",
+            level: parseInt(name.slice(-1)),
+            debug: false
+          }
+        },
+        type: "stockfish"
+      }
+    } else {
+      return {
+        player: {
+          name: name,
+          type: LocalPlayer
+        },
+        type: (window.location.hostname === name) ? "wiki" : "local"
+      }
+
+    }
   }
 
   // Change board position to fen
@@ -340,11 +355,7 @@
         [FEN "${fen}"]`
 
     initializeChess({ format: "PGN", PGN: pgn }) // Initialize chess with the new FEN
-
   })
-
-
-
 
   // Copy to clipboard functionality
   document.getElementById('copyFenBtn').addEventListener('click', async () => {
@@ -371,44 +382,9 @@
       page.style.display = "none";
     });
 
-    // Insert optional form content into DOM
-    // if (page === "claim") {
-    //   const claimBtn = document.getElementById('claim-btn');
-    //   if (claimBtn && offerAsPrototype) {
-    //     const prototypeHTML = `
-    //       <!-- Prototype Site Checkbox -->
-    //       <div class="form-group">
-    //         <div class="form-check">
-    //           <input class="form-check-input" type="checkbox" value="" id="prototype" />
-    //           <label class="form-check-label" for="prototype"> Treat <a class="homelink"></a> as prototype site? </label>
-    //           <span data-toggle="tooltip" data-container="body"
-    //             title="Treating this site as a prototype site means the new site you create will be an exact copy of this one.">ℹ️</span>
-    //         </div>
-    //       </div>`;
-
-    //     claimBtn.insertAdjacentHTML('beforebegin', prototypeHTML);
-
-    //     // Update any new homelinks
-    //     document.querySelectorAll(".homelink").forEach((e) => {
-    //       e.setAttribute("href", "//" + location.host + "/view/welcome-visitors");
-    //       e.innerHTML = location.host;
-    //     });
-
-    //     // Initialize new tooltip
-    //     $('[data-toggle="tooltip"]').tooltip();
-    //   }
-    // }
-
-
     // Shows the selected page
     document.getElementById(page).style.display = "block";
-    // Pushes the new page state to the browser's history
-    history.pushState(page, "", document.location.href);
   }
-  // Handle browser's forward/back buttons
-  window.addEventListener("popstate", (event) => {
-    if (event.state) changePage(event.state);
-  });
 </script>
 
 </html>
