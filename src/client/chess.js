@@ -109,7 +109,7 @@ const bind = async ($item, item) => {
 
 }
 
-// open chess plugin in new  popup window
+// open chess board in new popup window
 let popup
 const doPopup = event => {
   const html = 'index.html'
@@ -138,15 +138,6 @@ const sendMessage = (action) => {
   } catch (error) {
     console.error('Error sending message:', error)
     trouble('Error sending message', error)
-  }
-}
-
-if (typeof window !== 'undefined') {
-  window.plugins.chess = { emit, bind, doPopup, sendMessage }
-  if (typeof window.chessListener !== 'undefined' || window.chessListener == null) {
-    console.log('**** Adding chess listener')
-    window.chessListener = chessListener
-    window.addEventListener('message', chessListener)
   }
 }
 
@@ -270,6 +261,17 @@ function chessListener(event) {
   }
 }
 
+// Bind the chess listener and other methods to the window object
+if (typeof window !== 'undefined') {
+  window.plugins.chess = { emit, bind, doPopup, sendMessage }
+  if (typeof window.chessListener !== 'undefined' || window.chessListener == null) {
+    console.log('**** Adding chess listener')
+    window.chessListener = chessListener
+    window.addEventListener('message', chessListener)
+  }
+}
+
+// Example of how to export function, not currently used for this plugin
 const expand = text => {
   return text
     .replace(/&/g, '&amp;')

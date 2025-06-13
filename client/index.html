@@ -53,8 +53,7 @@
           <input id="fenInput" class="form-control" placeholder="FEN" value="4k2r/1P4P1/8/8/8/8/1p1N4/4K3 w - - 0 1" />
         </div>
       </form>
-      Chess-Console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE"
-        target="_blank">MIT</a>. <br />
+      Chess-Console code license: <a href="https://github.com/shaack/chess-console/blob/master/LICENSE" target="_blank">MIT</a>. <br />
       License for the Sounds: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>.
       <br />
       License of the SVG pieces <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC BY-SA
@@ -109,25 +108,21 @@
                 <div class="row">
                   <div class="col-6 col-md-12 col-lg-6">
                     <div class="">
-                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-wk" id="castle-wk"
-                        value="K">
+                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-wk" id="castle-wk" value="K">
                       <label class="custom-control-label" for="castle-wk">White O-O</label>
                     </div>
                     <div class="">
-                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-wq" id="castle-wq"
-                        value="Q">
+                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-wq" id="castle-wq" value="Q">
                       <label class="custom-control-label" for="castle-wq">White O-O-O</label>
                     </div>
                   </div>
                   <div class="col-6 col-md-12 col-lg-6">
                     <div class="">
-                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-bk" id="castle-bk"
-                        value="k">
+                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-bk" id="castle-bk" value="k">
                       <label class="custom-control-label" for="castle-bk">Black O-O</label>
                     </div>
                     <div class="">
-                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-bq" id="castle-bq"
-                        value="q">
+                      <input type="checkbox" name="castling" class="checkbox-castle checkbox-castle-bq" id="castle-bq" value="q">
                       <label class="custom-control-label" for="castle-bq">Black O-O-O</label>
                     </div>
                   </div>
@@ -374,14 +369,13 @@
     }
   })
 
-  // Function for changing page state with History API
+  // Function for changing page content
   function changePage(page) {
     const pages = document.getElementsByClassName("page");
     // Hides all pages
     Array.prototype.forEach.call(pages, (page) => {
       page.style.display = "none";
     });
-
     // Shows the selected page
     document.getElementById(page).style.display = "block";
   }
