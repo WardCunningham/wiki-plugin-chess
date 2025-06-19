@@ -137,7 +137,6 @@ const sendMessage = (action) => {
     if (iframe) iframe[0].contentWindow.postMessage(msg, window.origin)
   } catch (error) {
     console.error('Error sending message:', error)
-    trouble('Error sending message', error)
   }
 }
 
@@ -219,10 +218,6 @@ function figurineToFEN(positionText) {
 
   // Add default FEN parameters
   return `${fen} w KQkq - 0 1` // just to make it valid, add a default turn and castling rights
-}
-
-function trouble(text, detail) {
-  throw new Error(text + '\n' + detail)
 }
 
 // Listener for messages from the chess popup window or iframe
