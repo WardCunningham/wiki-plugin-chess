@@ -1,6 +1,13 @@
 let iframe, chessObj = {} // An object to hold the chess item's state and other important metadata
 
 const emit = async ($item, item) => {
+  console.log("EMITTING!!!!!!!!!!")
+  if (!iframe) {
+    console.log("No iframe, creating one")
+  } else {
+    console.log("Iframe exists, removing it")
+    iframe.remove();
+  }
   chessObj.item = item
   chessObj.chessState = item.text
   let params
@@ -250,6 +257,12 @@ function chessListener(event) {
     case 'get-state':
       sendMessage("set-state")
       // TODO - load the chess item
+      break
+    case 'refresh':
+      console.log("Refreshing chess item");
+      if (iframe) { // Check if the element exists
+        iframe.remove();
+      }
       break
     default:
       console.error({ where: 'chessListener', message: 'unknown action', data })
