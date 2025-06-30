@@ -264,6 +264,9 @@ function chessListener(event) {
         iframe.remove();
       }
       break
+    case 'error':
+      iframe.append("test error message")
+      break
     default:
       console.error({ where: 'chessListener', message: 'unknown action', data })
   }

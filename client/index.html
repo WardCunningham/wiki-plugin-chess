@@ -151,6 +151,12 @@
       </div>
     </div>
   </div>
+
+  <!-- ERROR Page -->
+  <div class="page container" id="error">
+    <h1>Error</h1>
+    <p>An error occurred while processing your request.</p>
+  </div>
 </body>
 
 <!-- SCRIPTS -->
@@ -197,12 +203,10 @@
   window.addEventListener("message", event => {
     const { action, chessObj } = event.data
     console.log(chessObj)
-    chessObj.parsedPGN = new Pgn(chessObj.PGN)
     switch (action) {
       case "set-state":
         console.log("I got the state!", chessObj)
         initializeChess(chessObj)
-        // chessConsole.initGame({ pgn: chessObj.PGN })
         break
       default:
         console.log("unknown message type:", action)
@@ -236,53 +240,66 @@
 
     if (chessObj.PGN) {
       console.log("Initializing Chess Console with PGN")
-      changePage("game") // Show the game page
-      if (typeof chessConsole === "undefined") {
-        console.log("I would like to show players", chessObj.parsedPGN.header.tags.Black, chessObj.parsedPGN.header.tags.White)
-        let { player: whitePlayer, type: whiteType } = configurePlayer(chessObj.parsedPGN.header.tags.White)
-        let { player: blackPlayer, type: blackType } = configurePlayer(chessObj.parsedPGN.header.tags.Black)
-        console.log("White Player:", whitePlayer, "Type:", whiteType)
-        console.log("Black Player:", blackPlayer, "Type:", blackType)
-        chessConsole = new ChessConsole(
-          document.getElementById("console-container"),
-          whitePlayer,
-          blackPlayer
-        )
+      try {
+        chessObj.parsedPGN = new Pgn(chessObj.PGN)
+        changePage("game") // Show the game page
+        if (typeof chessConsole === "undefined") {
+          console.log("I would like to show players", chessObj.parsedPGN.header.tags.Black, chessObj.parsedPGN.header.tags.White)
+          let { player: whitePlayer, type: whiteType } = configurePlayer(chessObj.parsedPGN.header.tags.White)
+          let { player: blackPlayer, type: blackType } = configurePlayer(chessObj.parsedPGN.header.tags.Black)
+          console.log("White Player:", whitePlayer, "Type:", whiteType)
+          console.log("Black Player:", blackPlayer, "Type:", blackType)
+          chessConsole = new ChessConsole(
+            document.getElementById("console-container"),
+            whitePlayer,
+            blackPlayer
+          )
 
-        new Board(chessConsole, {
-          assetsUrl: "./assets/",
-          position: FEN.empty,
-          style: {
-            cssClass: "green",
-            borderType: 'frame',
-            showCoordinates: true,
-            pieces: { file: "pieces/staunty.svg" }
-          }
-        }).initialized.then(() => {
-          new Persistence(chessConsole, {
-            savePrefix: "Stockfish"
-          }).load()
+          new Board(chessConsole, {
+            assetsUrl: "./assets/",
+            position: FEN.empty,
+            style: {
+              cssClass: "green",
+              borderType: 'frame',
+              showCoordinates: true,
+              pieces: { file: "pieces/staunty.svg" }
+            }
+          }).initialized.then(() => {
+            new Persistence(chessConsole, {
+              savePrefix: "Stockfish"
+            }).load()
 
+            chessConsole.initGame({ pgn: chessObj.PGN })
+          })
+          new History(chessConsole)
+          new HistoryControl(chessConsole)
+          new CapturedPieces(chessConsole)
+
+          // if (whiteType === "stockfish" || blackType === "stockfish") {
+          //   new StockfishGameControl(chessConsole, { player: chessConsole.opponent })
+          //   new StockfishStateView(chessConsole, chessConsole.opponent)
+
+          // }
+          new GameStateOutput(chessConsole)
+          new Sound(chessConsole, { soundSpriteFile: "./assets/sounds/chess_console_sounds.mp3" })
+
+          console.log("HAHAHAHAH! we're in a function!")
+        }
+        else {
+          console.log("chessConsole already initialized")
           chessConsole.initGame({ pgn: chessObj.PGN })
-        })
-        new History(chessConsole)
-        new HistoryControl(chessConsole)
-        new CapturedPieces(chessConsole)
-        console.log(`Opponent: `, chessConsole.opponent)
-
-        // if (whiteType === "stockfish" || blackType === "stockfish") {
-        //   new StockfishGameControl(chessConsole, { player: chessConsole.opponent })
-        //   new StockfishStateView(chessConsole, chessConsole.opponent)
-
-        // }
-        new GameStateOutput(chessConsole)
-        new Sound(chessConsole, { soundSpriteFile: "./assets/sounds/chess_console_sounds.mp3" })
-
-        console.log("HAHAHAHAH! we're in a function!")
-      }
-      else {
-        console.log("Chess Console already initialized")
-        chessConsole.initGame({ pgn: chessObj.PGN })
+        }
+      } catch (e) {
+        console.error("Error parsing PGN:", e)
+        chessObj.parsedPGN = null
+        changePage("error")
+        document.querySelector(".page#error").appendChild(document.createTextNode("Error parsing PGN: " + e.message))
+        document.querySelector(".page#error").appendChild(document.createElement("br"))
+        document.querySelector(".page#error").appendChild(document.createTextNode("Provided PGN: " + chessObj.PGN))
+        // sendMessage({
+        //   action: "error",
+        //   chessObj: chessObj,
+        // })
       }
     }
     else if (chessObj.FEN) {
